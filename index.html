@@ -30,6 +30,11 @@ const db = firebase.firestore();
 
 console.log("✅ Firebase conectado");
 
+db.collection("test").add({
+ mensaje:"conexion correcta",
+ fecha:new Date()
+});
+
 </script>
 
 </body>
