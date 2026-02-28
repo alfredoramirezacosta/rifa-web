@@ -1,164 +1,92 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
 <meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1">
+
 <title>Panel Admin</title>
 
 <style>
+
 body{
-font-family:Arial;
-text-align:center;
+margin:0;
 background:#111;
 color:white;
+font-family:-apple-system;
+padding:15px;
+}
+
+h1{
+text-align:center;
 }
 
 button{
-padding:15px;
-margin:10px;
-font-size:18px;
-cursor:pointer;
-background:#25D366;
+width:100%;
+padding:18px;
+font-size:20px;
+margin:10px 0;
+border-radius:14px;
 border:none;
+}
+
+.sortear{
+background:#ff9800;
 color:white;
-border-radius:8px;
+}
+
+.reset{
+background:red;
+color:white;
 }
 
 table{
-margin:auto;
-border-collapse:collapse;
+width:100%;
+margin-top:20px;
 background:white;
 color:black;
+border-radius:10px;
+overflow:hidden;
 }
 
 th,td{
-padding:10px;
-border:1px solid #ccc;
+padding:12px;
+font-size:16px;
 }
+
 </style>
 </head>
 
 <body>
 
-<h1>🎛 PANEL ADMIN</h1>
+<h1>🎛 Panel Admin</h1>
 
-<button onclick="elegirGanador()">
-🎰 SORTEAR GANADOR
+<button class="sortear"
+onclick="elegirGanador()">
+🎰 Sortear Ganador
+</button>
+
+<button class="reset"
+onclick="resetearRifa()">
+🔄 Resetear Rifa
 </button>
 
 <h2 id="ganador"></h2>
-
-<hr>
-
-<h3>Participantes</h3>
 
 <table>
 <thead>
 <tr>
 <th>Nombre</th>
-<th>Número</th>
-<th>Eliminar</th>
+<th>#</th>
 </tr>
 </thead>
-
 <tbody id="lista"></tbody>
 </table>
 
-<script type="module">
-
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-getFirestore,
-collection,
-onSnapshot,
-deleteDoc,
-doc,
-setDoc,
-getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-
-const firebaseConfig={
-apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
-authDomain:"rifa-web-2b2f3.firebaseapp.com",
-projectId:"rifa-web-2b2f3",
-storageBucket:"rifa-web-2b2f3.firebasestorage.app",
-messagingSenderId:"440243321091",
-appId:"1:440243321091:web:3a6a0a27e4e418cf6b9136"
-};
-
-const app=initializeApp(firebaseConfig);
-const db=getFirestore(app);
-
-const tabla=document.getElementById("lista");
-
-/* PARTICIPANTES */
-onSnapshot(collection(db,"participantes"),snap=>{
-
-tabla.innerHTML="";
-
-snap.forEach(d=>{
-
-const data=d.data();
-
-tabla.innerHTML+=`
-<tr>
-<td>${data.nombre}</td>
-<td>#${data.numero}</td>
-<td>
-<button onclick="eliminar('${d.id}')">❌</button>
-</td>
-</tr>
-`;
-
-});
-
-});
-
-window.eliminar=async(id)=>{
-await deleteDoc(doc(db,"participantes",id));
-};
-
-
-/* 🎰 SORTEO */
-window.elegirGanador=async()=>{
-
-const snapshot=
-await getDocs(collection(db,"participantes"));
-
-let participantes=[];
-
-snapshot.forEach(doc=>{
-participantes.push(doc.data());
-});
-
-if(participantes.length===0){
-alert("No hay participantes");
-return;
-}
-
-const ganador=
-participantes[
-Math.floor(Math.random()*participantes.length)
-];
-
-await setDoc(
-doc(db,"ganador","actual"),
-{
-nombre:ganador.nombre,
-numero:ganador.numero,
-timestamp:Date.now()
-}
-);
-
-document.getElementById("ganador").innerHTML=
-`🏆 ${ganador.nombre} - #${ganador.numero}`;
-
-};
-
-</script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="admin.js"></script>
 
 </body>
 </html>
