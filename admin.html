@@ -10,7 +10,17 @@
 <h2>📊 Panel Administrador</h2>
 
 <button onclick="toggleRifa()">Abrir / Cerrar Rifa</button>
-<p id="estadoRifa"></p>
+<h3 id="estadoRifa"></h3>
+
+<hr>
+
+<button onclick="elegirGanador()">
+🎰 Elegir Ganador
+</button>
+
+<h2 id="ganador"></h2>
+
+<hr>
 
 <table border="1">
 <thead>
@@ -37,7 +47,8 @@ onSnapshot,
 deleteDoc,
 doc,
 getDoc,
-setDoc
+setDoc,
+getDocs
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -55,7 +66,7 @@ const db=getFirestore(app);
 
 const tabla=document.getElementById("lista");
 
-/* PARTICIPANTES EN VIVO */
+/* PARTICIPANTES */
 onSnapshot(collection(db,"participantes"),snap=>{
 
 tabla.innerHTML="";
@@ -84,7 +95,7 @@ window.eliminar=async(id)=>{
 await deleteDoc(doc(db,"participantes",id));
 };
 
-/* ABRIR / CERRAR RIFA */
+/* ABRIR / CERRAR */
 window.toggleRifa=async()=>{
 
 const ref=doc(db,"configuracion","estado");
@@ -96,12 +107,10 @@ if(snap.exists()){
 actual=snap.data().abierto;
 }
 
-await setDoc(ref,{
-abierto:!actual
-});
+await setDoc(ref,{abierto:!actual});
 };
 
-/* MOSTRAR ESTADO */
+/* ESTADO RIFA */
 onSnapshot(doc(db,"configuracion","estado"),snap=>{
 
 if(!snap.exists()) return;
@@ -113,6 +122,56 @@ snap.data().abierto
 
 });
 
+
+/* 🎰 GANADOR AUTOMATICO */
+window.elegirGanador=async()=>{
+
+const snapshot=
+await getDocs(collection(db,"participantes"));
+
+let participantes=[];
+
+snapshot.forEach(doc=>{
+participantes.push(doc.data());
+});
+
+if(participantes.length===0){
+alert("No hay participantes");
+return;
+}
+
+const ganador=
+participantes[
+Math.floor(Math.random()*participantes.length)
+];
+
+/* GUARDAR GANADOR */
+await setDoc(
+doc(db,"ganador","actual"),
+ganador
+);
+
+alert(
+`GANADOR:\n${ganador.nombre}\nNúmero ${ganador.numero}`
+);
+
+};
+
+
+/* MOSTRAR GANADOR EN VIVO */
+onSnapshot(doc(db,"ganador","actual"),snap=>{
+
+if(!snap.exists()) return;
+
+const g=snap.data();
+
+document.getElementById("ganador").innerHTML=
+`🏆 GANADOR:<br>
+${g.nombre}<br>
+Número ${g.numero}`;
+});
+
 </script>
+
 </body>
 </html>
