@@ -1,28 +1,75 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rifa</title>
+
+<title>Panel Administrador - Rifa</title>
+
+<style>
+body{
+    font-family: Arial;
+    text-align:center;
+    background:#f4f4f4;
+}
+
+input,button{
+    padding:10px;
+    margin:5px;
+    font-size:16px;
+}
+
+table{
+    margin:auto;
+    border-collapse:collapse;
+    background:white;
+}
+
+th,td{
+    padding:10px;
+    border:1px solid #ccc;
+}
+
+th{
+    background:#2c3e50;
+    color:white;
+}
+</style>
+
 </head>
 
 <body>
 
-<h2>Participar en la Rifa</h2>
+<h2>🔐 Acceso Administrador</h2>
 
-<input id="nombre" placeholder="Nombre">
-<br><br>
-
-<input id="telefono" placeholder="Teléfono">
-<br><br>
-
-<button onclick="registrar()">Participar</button>
+<input type="password" id="clave" placeholder="Contraseña">
+<button onclick="login()">Entrar</button>
 
 <br><br>
 
-<h3 id="resultado"></h3>
+<div id="panel" style="display:none;">
 
-<!-- ✅ Firebase -->
+<h1>✅ Panel Administrador</h1>
+<p>Participantes registrados</p>
+
+<table>
+<thead>
+<tr>
+<th>Nombre</th>
+<th>Teléfono</th>
+<th>Número</th>
+</tr>
+</thead>
+
+<tbody id="lista"></tbody>
+
+</table>
+
+</div>
+
+
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
@@ -37,60 +84,56 @@ const firebaseConfig = {
   appId: "1:440243321091:web:3a6a0a27e4e418cf6b9136"
 };
 
+// ✅ Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
+
+// ✅ Base de datos
 const db = firebase.firestore();
 
 
-// ✅ REGISTRO CON NÚMERO ÚNICO
-async function registrar(){
+// ======================
+// LOGIN ADMIN
+// ======================
+function login(){
 
- let nombre = document.getElementById("nombre").value;
- let telefono = document.getElementById("telefono").value;
+ let clave = document.getElementById("clave").value;
 
- if(nombre === "" || telefono === ""){
-   alert("Completa los datos");
-   return;
+ if(clave === "rifa2026"){
+
+     document.getElementById("panel").style.display="block";
+     cargarParticipantes();
+
+ }else{
+     alert("❌ Contraseña incorrecta");
  }
 
- const ref = db.collection("participantes");
+}
 
- await db.runTransaction(async (transaction)=>{
 
-   const snapshot = await transaction.get(ref);
+// ======================
+// CARGAR PARTICIPANTES
+// ======================
+function cargarParticipantes(){
 
-   let usados = [];
+ db.collection("participantes")
+ .orderBy("numero")
+ .onSnapshot((snapshot)=>{
+
+   let tabla = document.getElementById("lista");
+   tabla.innerHTML="";
 
    snapshot.forEach(doc=>{
-     usados.push(doc.data().numero);
+
+     let data = doc.data();
+
+     tabla.innerHTML += `
+       <tr>
+         <td>${data.nombre}</td>
+         <td>${data.telefono}</td>
+         <td>#${data.numero}</td>
+       </tr>
+     `;
    });
-
-   let disponibles=[];
-
-   for(let i=1;i<=100;i++){
-     if(!usados.includes(i)){
-       disponibles.push(i);
-     }
-   }
-
-   if(disponibles.length === 0){
-     alert("🚫 Rifa llena");
-     return;
-   }
-
-   let numero =
-   disponibles[Math.floor(Math.random()*disponibles.length)];
-
-   const nuevoDoc = ref.doc();
-
-   transaction.set(nuevoDoc,{
-     nombre:nombre,
-     telefono:telefono,
-     numero:numero,
-     fecha:new Date()
-   });
-
-   document.getElementById("resultado")
-   .innerText = "✅ Tu número asignado es: #" + numero;
 
  });
 
