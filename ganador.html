@@ -2,64 +2,77 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Gran Sorteo</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>Sorteo</title>
 
 <style>
 
 body{
 margin:0;
-background:#050505;
+background:radial-gradient(circle,#111,#000);
 display:flex;
+flex-direction:column;
 justify-content:center;
 align-items:center;
 height:100vh;
-flex-direction:column;
 color:white;
 font-family:Arial;
 overflow:hidden;
 }
 
-/* luces casino */
-body::before{
-content:"";
-position:absolute;
-width:200%;
-height:200%;
-background:
-radial-gradient(circle,#ff000033 2%,transparent 3%);
-background-size:40px 40px;
-animation:luces 3s linear infinite;
-z-index:-1;
+/* CONTENEDOR RESPONSIVO */
+.ruleta-container{
+position:relative;
+width:min(85vw,85vh);
+aspect-ratio:1/1;
 }
 
-@keyframes luces{
-from{transform:rotate(0deg);}
-to{transform:rotate(360deg);}
-}
-
+/* RULETA PERFECTAMENTE CIRCULAR */
 canvas{
+width:100%;
+height:100%;
 border-radius:50%;
 box-shadow:
 0 0 40px gold,
-0 0 80px red,
-0 0 120px orange;
+0 0 80px orange;
 }
 
+/* FLECHA */
 #flecha{
 position:absolute;
-top:25px;
-font-size:70px;
+top:-25px;
+left:50%;
+transform:translateX(-50%);
+font-size:50px;
 color:red;
 }
 
+/* GANADOR */
 #ganador{
 margin-top:25px;
 text-align:center;
+animation:fade 1s ease;
 }
 
-@keyframes aparecer{
-from{transform:scale(.5);opacity:0;}
-to{transform:scale(1);opacity:1;}
+.numero{
+font-size:clamp(60px,10vw,120px);
+color:gold;
+font-weight:bold;
+}
+
+.nombre{
+font-size:clamp(28px,4vw,50px);
+}
+
+.tel{
+color:#aaa;
+font-size:clamp(18px,2vw,25px);
+}
+
+@keyframes fade{
+from{opacity:0;transform:scale(.7);}
+to{opacity:1;transform:scale(1);}
 }
 
 </style>
@@ -67,13 +80,13 @@ to{transform:scale(1);opacity:1;}
 
 <body>
 
+<div class="ruleta-container">
 <div id="flecha">▼</div>
-
-<canvas id="ruleta" width="600" height="600"></canvas>
+<canvas id="ruleta"></canvas>
+</div>
 
 <div id="ganador"></div>
 
-<!-- sonidos -->
 <audio id="spinSound"
 src="https://assets.mixkit.co/sfx/preview/mixkit-slot-machine-wheel-1934.mp3"></audio>
 
@@ -87,207 +100,161 @@ src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audi
 
 <script>
 
-/* ================= FIREBASE ================= */
+/* FIREBASE */
 
-const firebaseConfig={
+firebase.initializeApp({
 apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
 authDomain:"rifa-web-2b2f3.firebaseapp.com",
 projectId:"rifa-web-2b2f3"
-};
+});
 
-firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
-
-/* ================= RULETA ================= */
+/* CANVAS RESPONSIVO */
 
 const canvas=document.getElementById("ruleta");
 const ctx=canvas.getContext("2d");
+
+function resize(){
+const size=canvas.offsetWidth;
+canvas.width=size;
+canvas.height=size;
+dibujar();
+}
+
+window.addEventListener("resize",resize);
 
 let numeros=[];
 let angulo=0;
 let girando=false;
 
-const spinSound=document.getElementById("spinSound");
-const winSound=document.getElementById("winSound");
+async function cargar(){
 
-
-async function cargarNumeros(){
-
-let snap=await db.collection("participantes").get();
-
+const snap=await db.collection("participantes").get();
 numeros=[];
 
 snap.forEach(d=>{
 numeros.push(d.data().numero);
 });
 
-dibujar();
+resize();
 }
 
-cargarNumeros();
+cargar();
 
+/* DIBUJO */
 
 function dibujar(){
 
-if(numeros.length===0) return;
+if(!numeros.length) return;
 
+let r=canvas.width/2;
 let arc=(2*Math.PI)/numeros.length;
 
 for(let i=0;i<numeros.length;i++){
 
 ctx.beginPath();
+ctx.fillStyle=i%2?"#e74c3c":"#f1c40f";
 
-ctx.fillStyle=
-i%2?"#c0392b":"#f1c40f";
-
-ctx.moveTo(300,300);
-ctx.arc(
-300,
-300,
-300,
+ctx.moveTo(r,r);
+ctx.arc(r,r,r,
 arc*i+angulo,
-arc*(i+1)+angulo
-);
+arc*(i+1)+angulo);
 
 ctx.fill();
 
 ctx.save();
-ctx.translate(300,300);
+ctx.translate(r,r);
 ctx.rotate(arc*i+arc/2+angulo);
 
 ctx.fillStyle="black";
-ctx.font="20px Arial";
-ctx.fillText("#"+numeros[i],210,5);
+ctx.font=`${r*0.08}px Arial`;
+ctx.fillText("#"+numeros[i],r*0.7,5);
 
 ctx.restore();
 }
-
 }
 
+/* GIRO */
 
-/* ================= GIRO REAL ================= */
-
-function girarRuleta(ganador){
+function girar(data){
 
 if(girando) return;
 girando=true;
 
-spinSound.currentTime=0;
-spinSound.play();
+document.getElementById("spinSound").play();
 
-let index=numeros.indexOf(ganador.numero);
-
+let index=numeros.indexOf(data.numero);
 let arc=(2*Math.PI)/numeros.length;
+let destino=(3*Math.PI/2)-(index*arc)-(arc/2);
 
-let destino=
-(3*Math.PI/2) -
-(index*arc) -
-(arc/2);
+let objetivo=angulo+(8*Math.PI)+destino;
+let vel=0.35;
 
-let objetivo=
-angulo+(10*Math.PI)+destino;
+function anim(){
 
-let velocidad=0.35;
+angulo+=vel;
+vel*=0.992;
 
-function animar(){
-
-angulo+=velocidad;
-velocidad*=0.992;
-
-ctx.clearRect(0,0,600,600);
+ctx.clearRect(0,0,canvas.width,canvas.height);
 dibujar();
 
 if(angulo<objetivo){
-
-requestAnimationFrame(animar);
-
+requestAnimationFrame(anim);
 }else{
 
-spinSound.pause();
-winSound.play();
+document.getElementById("spinSound").pause();
+document.getElementById("winSound").play();
 
-mostrarGanador(ganador);
-megaConfeti();
+mostrar(data);
+confeti();
 
 girando=false;
 }
-
 }
 
-animar();
+anim();
 }
 
+/* GANADOR */
 
-/* ================= MOSTRAR GANADOR ================= */
+function mostrar(g){
 
-function mostrarGanador(data){
-
-let telefonoOculto =
-data.telefono
-? data.telefono.slice(0,6)+"****"
-: "";
+let tel=g.telefono
+? g.telefono.slice(0,6)+"****"
+:"";
 
 document.getElementById("ganador").innerHTML=
 `
-<div style="animation:aparecer 1s ease">
-
-🏆 GANADOR 🏆<br><br>
-
-<span style="
-font-size:80px;
-color:gold;
-">
-#${data.numero}
-</span>
-
-<br><br>
-
-<span style="
-font-size:45px;
-">
-${data.nombre}
-</span>
-
-<br>
-
-<span style="
-font-size:25px;
-color:#aaa;
-">
-${telefonoOculto}
-</span>
-
-</div>
+🏆 GANADOR 🏆
+<div class="numero">#${g.numero}</div>
+<div class="nombre">${g.nombre}</div>
+<div class="tel">${tel}</div>
 `;
 }
 
+/* CONFETI */
 
-/* ================= CONFETI ================= */
+function confeti(){
 
-function megaConfeti(){
-
-setInterval(()=>{
+for(let i=0;i<5;i++){
+setTimeout(()=>{
 confetti({
-particleCount:120,
-spread:180,
-origin:{y:Math.random()}
+particleCount:200,
+spread:160,
+origin:{y:.6}
 });
-},400);
-
+},i*400);
+}
 }
 
-
-/* ================= FIREBASE LISTENER ================= */
+/* LISTENER */
 
 db.collection("ganador")
 .doc("actual")
 .onSnapshot(doc=>{
-
-if(!doc.exists) return;
-
-girarRuleta(doc.data());
-
+if(!doc.exists)return;
+girar(doc.data());
 });
 
 </script>
