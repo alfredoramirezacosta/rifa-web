@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ganador</title>
+
+<title>Pantalla Ganador</title>
 
 <style>
 
@@ -11,39 +13,33 @@ body{
 margin:0;
 background:black;
 color:white;
+height:100vh;
 display:flex;
+flex-direction:column;
 justify-content:center;
 align-items:center;
-height:100vh;
 font-family:Arial;
-flex-direction:column;
 overflow:hidden;
 }
 
 #slot{
-font-size:90px;
-background:#111;
+font-size:100px;
 padding:40px 80px;
+background:#111;
 border-radius:20px;
-box-shadow:0 0 40px orange;
+box-shadow:0 0 50px orange;
 }
 
 #resultado{
 margin-top:40px;
 font-size:40px;
-text-align:center;
 opacity:0;
-transition:.6s;
-}
-
-canvas{
-position:fixed;
-pointer-events:none;
-top:0;
-left:0;
+transition:.5s;
+text-align:center;
 }
 
 </style>
+
 </head>
 
 <body>
@@ -51,8 +47,6 @@ left:0;
 <div id="slot">🎰</div>
 
 <div id="resultado"></div>
-
-<canvas id="confeti"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -70,6 +64,8 @@ getDocs
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
+/* 🔥 FIREBASE */
 const firebaseConfig={
 apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
 authDomain:"rifa-web-2b2f3.firebaseapp.com",
@@ -85,33 +81,36 @@ const db=getFirestore(app);
 const slot=document.getElementById("slot");
 const resultado=document.getElementById("resultado");
 
-let ultimoTimestamp=0;
+let animando=false;
 
 
-/* 🎰 ANIMACION */
-async function animarSorteo(ganador){
+/* 🎰 ANIMACION REAL */
+async function iniciarAnimacion(ganador){
+
+if(animando) return;
+animando=true;
+
+resultado.style.opacity=0;
 
 const snap=await getDocs(collection(db,"participantes"));
 
 let numeros=[];
-snap.forEach(d=>numeros.push(d.data().numero));
+snap.forEach(d=>{
+numeros.push(d.data().numero);
+});
 
-let velocidad=50;
-let tiempo=0;
-
-resultado.style.opacity=0;
+let velocidad=40;
+let ciclos=0;
 
 const intervalo=setInterval(()=>{
 
-slot.innerText=
-"#"+numeros[
-Math.floor(Math.random()*numeros.length)
-];
+slot.innerText =
+"#"+numeros[Math.floor(Math.random()*numeros.length)];
 
-tiempo+=velocidad;
-velocidad+=8;
+ciclos++;
+velocidad+=5;
 
-if(tiempo>10000){
+if(ciclos>120){
 
 clearInterval(intervalo);
 
@@ -124,13 +123,14 @@ Número #${ganador.numero}`;
 
 resultado.style.opacity=1;
 
-/* CONFETI */
+/* 🎉 CONFETI */
 confetti({
-particleCount:300,
-spread:200,
+particleCount:250,
+spread:180,
 origin:{y:0.6}
 });
 
+animando=false;
 }
 
 },velocidad);
@@ -138,19 +138,18 @@ origin:{y:0.6}
 }
 
 
-/* ESCUCHAR GANADOR */
-onSnapshot(doc(db,"ganador","actual"),docSnap=>{
+/* 👂 ESCUCHAR CAMBIO REAL */
+onSnapshot(
+doc(db,"ganador","actual"),
+(snapshot)=>{
 
-if(!docSnap.exists()) return;
+if(!snapshot.exists()) return;
 
-const data=docSnap.data();
+const ganador=snapshot.data();
 
-if(data.timestamp===ultimoTimestamp)
-return;
+console.log("GANADOR DETECTADO:",ganador);
 
-ultimoTimestamp=data.timestamp;
-
-animarSorteo(data);
+iniciarAnimacion(ganador);
 
 });
 
