@@ -2,12 +2,13 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Ruleta Rifa</title>
+<title>Gran Sorteo</title>
 
 <style>
 
 body{
-background:#111;
+margin:0;
+background:#050505;
 display:flex;
 justify-content:center;
 align-items:center;
@@ -18,23 +19,44 @@ font-family:Arial;
 overflow:hidden;
 }
 
+/* Luces casino */
+body::before{
+content:"";
+position:absolute;
+width:200%;
+height:200%;
+background:
+radial-gradient(circle,#ff000033 2%,transparent 3%);
+background-size:40px 40px;
+animation:luces 2s linear infinite;
+z-index:-1;
+}
+
+@keyframes luces{
+from{transform:rotate(0deg);}
+to{transform:rotate(360deg);}
+}
+
 canvas{
-background:#222;
 border-radius:50%;
-box-shadow:0 0 40px black;
+box-shadow:
+0 0 40px gold,
+0 0 80px red,
+0 0 120px orange;
 }
 
 #flecha{
 position:absolute;
-top:40px;
-font-size:60px;
+top:30px;
+font-size:70px;
 color:red;
 }
 
 #ganador{
-margin-top:20px;
-font-size:40px;
+margin-top:25px;
+font-size:50px;
 color:gold;
+font-weight:bold;
 }
 
 </style>
@@ -44,9 +66,16 @@ color:gold;
 
 <div id="flecha">▼</div>
 
-<canvas id="ruleta" width="500" height="500"></canvas>
+<canvas id="ruleta" width="600" height="600"></canvas>
 
 <div id="ganador"></div>
+
+<!-- sonidos -->
+<audio id="spinSound"
+src="https://assets.mixkit.co/sfx/preview/mixkit-slot-machine-wheel-1934.mp3"></audio>
+
+<audio id="winSound"
+src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audio>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -55,72 +84,34 @@ color:gold;
 
 <script>
 
+/* ================= FIREBASE ================= */
+
 const firebaseConfig={
 apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
 authDomain:"rifa-web-2b2f3.firebaseapp.com",
-projectId:"rifa-web-2b2f3",
-storageBucket:"rifa-web-2b2f3.firebasestorage.app",
-messagingSenderId:"440243321091",
-appId:"1:440243321091:web:3a6a0a27e4e418cf6b9136"
+projectId:"rifa-web-2b2f3"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
+
+/* ================= RULETA ================= */
+
 const canvas=document.getElementById("ruleta");
 const ctx=canvas.getContext("2d");
 
 let numeros=[];
-let anguloActual=0;
+let angulo=0;
 let girando=false;
 
+const spinSound=document.getElementById("spinSound");
+const winSound=document.getElementById("winSound");
 
-/* =====================
-DIBUJAR RULETA
-===================== */
-
-function dibujar(){
-
-let arc=(2*Math.PI)/numeros.length;
-
-for(let i=0;i<numeros.length;i++){
-
-ctx.beginPath();
-ctx.fillStyle=i%2?"#25D366":"#FFD700";
-
-ctx.moveTo(250,250);
-ctx.arc(
-250,
-250,
-250,
-arc*i+anguloActual,
-arc*(i+1)+anguloActual
-);
-
-ctx.fill();
-
-ctx.save();
-ctx.translate(250,250);
-ctx.rotate(arc*i+arc/2+anguloActual);
-
-ctx.fillStyle="black";
-ctx.font="18px Arial";
-ctx.fillText(numeros[i],170,5);
-
-ctx.restore();
-}
-
-}
-
-
-/* =====================
-OBTENER PARTICIPANTES
-===================== */
 
 async function cargarNumeros(){
 
-let snap=
-await db.collection("participantes").get();
+let snap=await db.collection("participantes").get();
 
 numeros=[];
 
@@ -134,17 +125,53 @@ dibujar();
 cargarNumeros();
 
 
-/* =====================
-GIRAR RULETA
-===================== */
+function dibujar(){
 
-function girarRuleta(numeroGanador){
+let arc=(2*Math.PI)/numeros.length;
+
+for(let i=0;i<numeros.length;i++){
+
+ctx.beginPath();
+
+ctx.fillStyle=
+i%2?"#c0392b":"#f1c40f";
+
+ctx.moveTo(300,300);
+ctx.arc(
+300,
+300,
+300,
+arc*i+angulo,
+arc*(i+1)+angulo
+);
+
+ctx.fill();
+
+ctx.save();
+ctx.translate(300,300);
+ctx.rotate(arc*i+arc/2+angulo);
+
+ctx.fillStyle="black";
+ctx.font="20px Arial";
+ctx.fillText(numeros[i],210,5);
+
+ctx.restore();
+}
+
+}
+
+
+/* ================= GIRO REAL ================= */
+
+function girarRuleta(ganador){
 
 if(girando) return;
 girando=true;
 
-let index=numeros.indexOf(numeroGanador);
+spinSound.currentTime=0;
+spinSound.play();
 
+let index=numeros.indexOf(ganador);
 let arc=(2*Math.PI)/numeros.length;
 
 let destino=
@@ -152,31 +179,33 @@ let destino=
 (index*arc) -
 (arc/2);
 
-let vueltas=8;
-
 let objetivo=
-anguloActual+
-(vueltas*2*Math.PI)+destino;
+angulo+(10*Math.PI)+destino;
 
-let velocidad=0.3;
+let velocidad=0.35;
 
 function animar(){
 
-anguloActual+=velocidad;
+angulo+=velocidad;
 
-velocidad*=0.985;
+velocidad*=0.992;
 
-ctx.clearRect(0,0,500,500);
+ctx.clearRect(0,0,600,600);
 dibujar();
 
-if(anguloActual<objetivo){
+if(angulo<objetivo){
+
 requestAnimationFrame(animar);
+
 }else{
 
-mostrarGanador(numeroGanador);
-lanzarConfeti();
-girando=false;
+spinSound.pause();
+winSound.play();
 
+mostrarGanador(ganador);
+megaConfeti();
+
+girando=false;
 }
 
 }
@@ -185,9 +214,7 @@ animar();
 }
 
 
-/* =====================
-GANADOR
-===================== */
+/* ================= GANADOR ================= */
 
 function mostrarGanador(num){
 
@@ -197,20 +224,22 @@ document.getElementById("ganador")
 }
 
 
-function lanzarConfeti(){
+/* ================= CONFETI ================= */
 
+function megaConfeti(){
+
+setInterval(()=>{
 confetti({
-particleCount:400,
+particleCount:120,
 spread:180,
-origin:{y:0.6}
+origin:{y:Math.random()}
 });
+},400);
 
 }
 
 
-/* =====================
-ESCUCHAR FIREBASE
-===================== */
+/* ================= FIREBASE LISTENER ================= */
 
 db.collection("ganador")
 .doc("actual")
@@ -218,9 +247,7 @@ db.collection("ganador")
 
 if(!doc.exists) return;
 
-let ganador=doc.data().numero;
-
-girarRuleta(ganador);
+girarRuleta(doc.data().numero);
 
 });
 
