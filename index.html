@@ -18,7 +18,11 @@
 
 <button onclick="registrar()">Participar</button>
 
-<!-- Firebase -->
+<br><br>
+
+<h3 id="resultado"></h3>
+
+<!-- ✅ Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
@@ -36,18 +40,59 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-function registrar(){
+
+// ✅ REGISTRO CON NÚMERO ÚNICO
+async function registrar(){
 
  let nombre = document.getElementById("nombre").value;
  let telefono = document.getElementById("telefono").value;
 
- db.collection("participantes").add({
-   nombre:nombre,
-   telefono:telefono,
-   numero: Math.floor(Math.random()*100)+1
- });
+ if(nombre === "" || telefono === ""){
+   alert("Completa los datos");
+   return;
+ }
 
- alert("Registrado ✅");
+ const ref = db.collection("participantes");
+
+ await db.runTransaction(async (transaction)=>{
+
+   const snapshot = await transaction.get(ref);
+
+   let usados = [];
+
+   snapshot.forEach(doc=>{
+     usados.push(doc.data().numero);
+   });
+
+   let disponibles=[];
+
+   for(let i=1;i<=100;i++){
+     if(!usados.includes(i)){
+       disponibles.push(i);
+     }
+   }
+
+   if(disponibles.length === 0){
+     alert("🚫 Rifa llena");
+     return;
+   }
+
+   let numero =
+   disponibles[Math.floor(Math.random()*disponibles.length)];
+
+   const nuevoDoc = ref.doc();
+
+   transaction.set(nuevoDoc,{
+     nombre:nombre,
+     telefono:telefono,
+     numero:numero,
+     fecha:new Date()
+   });
+
+   document.getElementById("resultado")
+   .innerText = "✅ Tu número asignado es: #" + numero;
+
+ });
 
 }
 
