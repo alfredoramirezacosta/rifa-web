@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Rifa</title>
+<title>Registro Rifa</title>
 
 <style>
+
 body{
 font-family:Arial;
 background:#f2f2f2;
@@ -19,6 +20,23 @@ margin:auto;
 max-width:420px;
 border-radius:10px;
 box-shadow:0 0 10px rgba(0,0,0,.2);
+}
+
+input{
+width:90%;
+padding:10px;
+margin:5px;
+font-size:16px;
+}
+
+button{
+padding:12px;
+background:#25D366;
+color:white;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
 }
 
 .grid{
@@ -45,6 +63,7 @@ cursor:not-allowed;
 background:#25D366;
 color:white;
 }
+
 </style>
 </head>
 
@@ -52,17 +71,18 @@ color:white;
 
 <div class="container">
 
-<h2>🎟 Participa en la Rifa</h2>
+<h2>🎟 Registro de Participante</h2>
 
-<input id="nombre" placeholder="Nombre"><br><br>
-<input id="telefono" placeholder="Teléfono">
+<input id="nombre" placeholder="Nombre del participante">
+<input id="telefono" placeholder="Teléfono del participante">
 
-<h3>Números disponibles</h3>
+<h3>Seleccionar número</h3>
+
 <div id="numeros" class="grid"></div>
 
 <p id="contador"></p>
 
-<button onclick="participar()">Confirmar</button>
+<button onclick="participar()">Registrar</button>
 
 </div>
 
@@ -97,15 +117,20 @@ const db=getFirestore(app);
 let numeroSeleccionado=null;
 const contenedor=document.getElementById("numeros");
 
-/* ESTADO RIFA */
+
+/* VERIFICAR SI RIFA ABIERTA */
 async function rifaAbierta(){
+
 const ref=doc(db,"configuracion","estado");
 const snap=await getDoc(ref);
+
 if(!snap.exists()) return true;
+
 return snap.data().abierto;
 }
 
-/* GRID NUMEROS */
+
+/* CREAR GRID */
 function crearGrid(ocupados){
 
 contenedor.innerHTML="";
@@ -120,6 +145,7 @@ if(ocupados.includes(i)){
 div.classList.add("ocupado");
 }else{
 div.onclick=()=>{
+
 document.querySelectorAll(".numero")
 .forEach(n=>n.classList.remove("seleccionado"));
 
@@ -135,7 +161,8 @@ document.getElementById("contador")
 .innerText=`Disponibles: ${100-ocupados.length}`;
 }
 
-/* TIEMPO REAL */
+
+/* ACTUALIZACION EN VIVO */
 onSnapshot(collection(db,"participantes"),snap=>{
 
 let usados=[];
@@ -148,22 +175,27 @@ crearGrid(usados);
 
 });
 
-/* REGISTRO */
+
+/* REGISTRAR PARTICIPANTE */
 window.participar=async()=>{
 
 if(!(await rifaAbierta())){
-alert("🚫 Rifa cerrada");
+alert("🚫 La rifa está cerrada");
 return;
 }
 
-const nombre=document.getElementById("nombre").value.trim();
-const telefono=document.getElementById("telefono").value.trim();
+const nombre=
+document.getElementById("nombre").value.trim();
+
+const telefono=
+document.getElementById("telefono").value.trim();
 
 if(!nombre||!telefono||!numeroSeleccionado){
 alert("Completa todos los datos");
 return;
 }
 
+/* GUARDAR */
 await addDoc(collection(db,"participantes"),{
 nombre,
 telefono,
@@ -171,14 +203,31 @@ numero:numeroSeleccionado,
 fecha:new Date()
 });
 
+
+/* MENSAJE AL CLIENTE */
 const mensaje=
-`Hola, aparté el número ${numeroSeleccionado}`;
+`🎟 Registro exitoso
+
+Nombre: ${nombre}
+Número asignado: ${numeroSeleccionado}
+
+Gracias por participar ✅`;
+
+const telefonoLimpio=
+telefono.replace(/\D/g,'');
 
 window.location.href=
-`https://wa.me/526624446775?text=${encodeURIComponent(mensaje)}`;
+`https://wa.me/52${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`;
+
+
+/* LIMPIAR FORMULARIO */
+document.getElementById("nombre").value="";
+document.getElementById("telefono").value="";
+numeroSeleccionado=null;
 
 };
 
 </script>
+
 </body>
 </html>
