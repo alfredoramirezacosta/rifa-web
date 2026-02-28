@@ -2,60 +2,49 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
 <title>Rifa</title>
 
 <style>
 body{
-    font-family: Arial, sans-serif;
-    background:#f4f6f8;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    margin:0;
+font-family:Arial;
+background:#f2f2f2;
+text-align:center;
 }
 
 .container{
-    background:white;
-    padding:25px;
-    border-radius:12px;
-    width:90%;
-    max-width:400px;
-    box-shadow:0 5px 15px rgba(0,0,0,0.2);
+background:white;
+padding:20px;
+margin:auto;
+max-width:420px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,.2);
 }
 
-h2{
-    text-align:center;
-}
-
-input,button{
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    border-radius:8px;
-    border:1px solid #ccc;
-    font-size:16px;
-}
-
-button{
-    background:#25D366;
-    color:white;
-    border:none;
-    font-weight:bold;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#1ebe5d;
+.grid{
+display:grid;
+grid-template-columns:repeat(10,1fr);
+gap:5px;
+margin-top:15px;
 }
 
 .numero{
-    font-size:22px;
-    text-align:center;
-    margin-top:15px;
-    font-weight:bold;
+padding:8px;
+border-radius:6px;
+background:#e0e0e0;
+cursor:pointer;
+}
+
+.ocupado{
+background:red;
+color:white;
+cursor:not-allowed;
+}
+
+.seleccionado{
+background:#25D366;
+color:white;
 }
 </style>
 </head>
@@ -64,115 +53,129 @@ button:hover{
 
 <div class="container">
 
-<h2>🎟 Participa en la Rifa</h2>
+<h2>🎟 Rifa</h2>
 
-<input type="text" id="nombre" placeholder="Tu nombre">
-<input type="tel" id="telefono" placeholder="Tu teléfono">
+<input id="nombre" placeholder="Nombre"><br><br>
+<input id="telefono" placeholder="Teléfono"><br>
 
-<button onclick="participar()">Participar</button>
+<h3>Números</h3>
 
-<div class="numero" id="resultado"></div>
+<div id="numeros" class="grid"></div>
+
+<p id="contador"></p>
+
+<button onclick="participar()">Confirmar</button>
 
 </div>
 
-
-<!-- Firebase -->
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
 getFirestore,
 collection,
 addDoc,
+onSnapshot,
+query,
+where,
 getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
-/* 🔥 TU CONFIG FIREBASE */
 const firebaseConfig = {
-apiKey: "TU_API_KEY",
-authDomain: "TU_DOMINIO",
-projectId: "TU_PROJECT_ID",
-storageBucket: "TU_BUCKET",
-messagingSenderId: "TU_ID",
-appId: "TU_APP"
+apiKey: "AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
+authDomain: "rifa-web-2b2f3.firebaseapp.com",
+projectId: "rifa-web-2b2f3",
+storageBucket: "rifa-web-2b2f3.firebasestorage.app",
+messagingSenderId: "440243321091",
+appId: "1:440243321091:web:3a6a0a27e4e418cf6b9136"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+let numeroSeleccionado=null;
+const contenedor=document.getElementById("numeros");
 
-/* GENERAR NUMERO UNICO */
-async function generarNumeroUnico(){
+function crearGrid(ocupados){
 
-const snapshot = await getDocs(collection(db,"participantes"));
+contenedor.innerHTML="";
 
-let usados = [];
+for(let i=1;i<=100;i++){
 
-snapshot.forEach(doc=>{
+let div=document.createElement("div");
+div.textContent=i;
+div.className="numero";
+
+if(ocupados.includes(i)){
+div.classList.add("ocupado");
+}else{
+div.onclick=()=>{
+document.querySelectorAll(".numero")
+.forEach(n=>n.classList.remove("seleccionado"));
+
+div.classList.add("seleccionado");
+numeroSeleccionado=i;
+};
+}
+
+contenedor.appendChild(div);
+}
+
+document.getElementById("contador")
+.innerText=`Disponibles: ${100-ocupados.length}`;
+}
+
+onSnapshot(collection(db,"participantes"),snap=>{
+
+let usados=[];
+
+snap.forEach(doc=>{
 usados.push(doc.data().numero);
 });
 
-let disponibles=[];
+crearGrid(usados);
 
-for(let i=1;i<=100;i++){
-if(!usados.includes(i)){
-disponibles.push(i);
-}
-}
+});
 
-if(disponibles.length===0){
-return null;
-}
-
-return disponibles[
-Math.floor(Math.random()*disponibles.length)
-];
-}
-
-
-/* PARTICIPAR */
-window.participar = async function(){
+window.participar=async()=>{
 
 const nombre=document.getElementById("nombre").value.trim();
 const telefono=document.getElementById("telefono").value.trim();
 
-if(!nombre || !telefono){
-alert("Completa todos los campos");
+if(!nombre||!telefono||!numeroSeleccionado){
+alert("Completa todo");
 return;
 }
 
-const numero=await generarNumeroUnico();
+const q=query(
+collection(db,"participantes"),
+where("telefono","==",telefono)
+);
 
-if(numero===null){
-alert("Rifa llena");
+const existe=await getDocs(q);
+
+if(!existe.empty){
+alert("Este teléfono ya participó");
 return;
 }
 
-/* GUARDAR */
 await addDoc(collection(db,"participantes"),{
 nombre,
 telefono,
-numero,
+numero:numeroSeleccionado,
 fecha:new Date()
 });
 
-document.getElementById("resultado").innerHTML=
-`✅ Tu número es: ${numero}`;
+const msg=`Hola, aparté el número ${numeroSeleccionado}`;
 
+window.location.href=
+`https://wa.me/526624446775?text=${encodeURIComponent(msg)}`;
 
-/* WHATSAPP */
-const mensaje=
-`Hola, participé en la rifa y mi número es ${numero}`;
-
-const whatsapp=
-`https://wa.me/526624446775?text=${encodeURIComponent(mensaje)}`;
-
-setTimeout(()=>{
-window.location.href=whatsapp;
-},1500);
-
-}
+};
 
 </script>
 
