@@ -19,7 +19,7 @@ font-family:Arial;
 overflow:hidden;
 }
 
-/* Luces casino */
+/* luces casino */
 body::before{
 content:"";
 position:absolute;
@@ -28,7 +28,7 @@ height:200%;
 background:
 radial-gradient(circle,#ff000033 2%,transparent 3%);
 background-size:40px 40px;
-animation:luces 2s linear infinite;
+animation:luces 3s linear infinite;
 z-index:-1;
 }
 
@@ -47,16 +47,19 @@ box-shadow:
 
 #flecha{
 position:absolute;
-top:30px;
+top:25px;
 font-size:70px;
 color:red;
 }
 
 #ganador{
 margin-top:25px;
-font-size:50px;
-color:gold;
-font-weight:bold;
+text-align:center;
+}
+
+@keyframes aparecer{
+from{transform:scale(.5);opacity:0;}
+to{transform:scale(1);opacity:1;}
 }
 
 </style>
@@ -127,6 +130,8 @@ cargarNumeros();
 
 function dibujar(){
 
+if(numeros.length===0) return;
+
 let arc=(2*Math.PI)/numeros.length;
 
 for(let i=0;i<numeros.length;i++){
@@ -153,7 +158,7 @@ ctx.rotate(arc*i+arc/2+angulo);
 
 ctx.fillStyle="black";
 ctx.font="20px Arial";
-ctx.fillText(numeros[i],210,5);
+ctx.fillText("#"+numeros[i],210,5);
 
 ctx.restore();
 }
@@ -171,7 +176,8 @@ girando=true;
 spinSound.currentTime=0;
 spinSound.play();
 
-let index=numeros.indexOf(ganador);
+let index=numeros.indexOf(ganador.numero);
+
 let arc=(2*Math.PI)/numeros.length;
 
 let destino=
@@ -187,7 +193,6 @@ let velocidad=0.35;
 function animar(){
 
 angulo+=velocidad;
-
 velocidad*=0.992;
 
 ctx.clearRect(0,0,600,600);
@@ -214,13 +219,47 @@ animar();
 }
 
 
-/* ================= GANADOR ================= */
+/* ================= MOSTRAR GANADOR ================= */
 
-function mostrarGanador(num){
+function mostrarGanador(data){
 
-document.getElementById("ganador")
-.innerHTML=`🏆 GANADOR #${num}`;
+let telefonoOculto =
+data.telefono
+? data.telefono.slice(0,6)+"****"
+: "";
 
+document.getElementById("ganador").innerHTML=
+`
+<div style="animation:aparecer 1s ease">
+
+🏆 GANADOR 🏆<br><br>
+
+<span style="
+font-size:80px;
+color:gold;
+">
+#${data.numero}
+</span>
+
+<br><br>
+
+<span style="
+font-size:45px;
+">
+${data.nombre}
+</span>
+
+<br>
+
+<span style="
+font-size:25px;
+color:#aaa;
+">
+${telefonoOculto}
+</span>
+
+</div>
+`;
 }
 
 
@@ -247,7 +286,7 @@ db.collection("ganador")
 
 if(!doc.exists) return;
 
-girarRuleta(doc.data().numero);
+girarRuleta(doc.data());
 
 });
 
