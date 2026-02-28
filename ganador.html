@@ -3,7 +3,8 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport"
+content="width=device-width,initial-scale=1">
 
 <title>Ganador</title>
 
@@ -11,153 +12,72 @@
 
 body{
 margin:0;
-background:#000;
+background:black;
 color:white;
-font-family:Arial;
 display:flex;
-flex-direction:column;
 justify-content:center;
 align-items:center;
 height:100vh;
+font-family:-apple-system;
 text-align:center;
-overflow:hidden;
 }
 
-/* CAJA PRINCIPAL */
-#caja{
-background:#111;
-padding:50px;
-border-radius:25px;
-box-shadow:0 0 60px #ff9800;
-width:90%;
-max-width:500px;
+.numero{
+font-size:18vw;
+color:gold;
 }
 
-/* NUMERO */
-#numero{
-font-size:90px;
-color:#FFD700;
-margin:20px 0;
-}
-
-/* NOMBRE */
-#nombre{
-font-size:40px;
-}
-
-/* TITULO */
-h1{
-font-size:35px;
-margin:0;
+.nombre{
+font-size:7vw;
+margin-top:20px;
 }
 
 </style>
-
 </head>
 
 <body>
 
-<div id="caja">
-
-<h1>🎰 SORTEO EN CURSO</h1>
-
-<div id="numero">--</div>
-
-<div id="nombre"></div>
-
+<div>
+<h1>🏆 GANADOR</h1>
+<div id="numero" class="numero">--</div>
+<div id="nombre" class="nombre"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-<script type="module">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+<script>
 
-import {
-getFirestore,
-doc,
-onSnapshot,
-collection,
-getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-/* 🔥 FIREBASE */
 const firebaseConfig={
 apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
 authDomain:"rifa-web-2b2f3.firebaseapp.com",
-projectId:"rifa-web-2b2f3",
-storageBucket:"rifa-web-2b2f3.firebasestorage.app",
-messagingSenderId:"440243321091",
-appId:"1:440243321091:web:3a6a0a27e4e418cf6b9136"
+projectId:"rifa-web-2b2f3"
 };
 
-const app=initializeApp(firebaseConfig);
-const db=getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
 
-const numero=document.getElementById("numero");
-const nombre=document.getElementById("nombre");
+db.collection("config")
+.doc("ganador")
+.onSnapshot(doc=>{
 
-let animando=false;
-
-
-/* 🎰 ANIMACION */
-async function animar(ganador){
-
-if(animando) return;
-animando=true;
-
+if(!doc.exists){
+numero.innerText="--";
 nombre.innerText="";
+return;
+}
 
-const snap=await getDocs(collection(db,"participantes"));
+let g=doc.data();
 
-let numeros=[];
-snap.forEach(d=>{
-numeros.push(d.data().numero);
-});
+numero.innerText="#"+g.numero;
+nombre.innerText=g.nombre;
 
-let velocidad=40;
-let vueltas=0;
-
-const loop=setInterval(()=>{
-
-numero.innerText =
-numeros[Math.floor(Math.random()*numeros.length)];
-
-vueltas++;
-velocidad+=6;
-
-if(vueltas>100){
-
-clearInterval(loop);
-
-numero.innerText="#"+ganador.numero;
-nombre.innerText=ganador.nombre;
-
-/* CONFETI */
 confetti({
-particleCount:200,
-spread:160,
-origin:{y:0.6}
+particleCount:250,
+spread:160
 });
-
-animando=false;
-}
-
-},velocidad);
-
-}
-
-
-/* 👂 ESCUCHAR GANADOR */
-onSnapshot(
-doc(db,"ganador","actual"),
-(snap)=>{
-
-if(!snap.exists()) return;
-
-animar(snap.data());
 
 });
 
