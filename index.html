@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-
 <title>Rifa</title>
 
 <style>
@@ -31,8 +30,8 @@ margin-top:15px;
 
 .numero{
 padding:8px;
-border-radius:6px;
 background:#e0e0e0;
+border-radius:6px;
 cursor:pointer;
 }
 
@@ -53,13 +52,12 @@ color:white;
 
 <div class="container">
 
-<h2>🎟 Rifa</h2>
+<h2>🎟 Participa en la Rifa</h2>
 
 <input id="nombre" placeholder="Nombre"><br><br>
-<input id="telefono" placeholder="Teléfono"><br>
+<input id="telefono" placeholder="Teléfono">
 
-<h3>Números</h3>
-
+<h3>Números disponibles</h3>
 <div id="numeros" class="grid"></div>
 
 <p id="contador"></p>
@@ -78,28 +76,36 @@ getFirestore,
 collection,
 addDoc,
 onSnapshot,
-query,
-where,
-getDocs
+doc,
+getDoc
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
-const firebaseConfig = {
-apiKey: "AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
-authDomain: "rifa-web-2b2f3.firebaseapp.com",
-projectId: "rifa-web-2b2f3",
-storageBucket: "rifa-web-2b2f3.firebasestorage.app",
-messagingSenderId: "440243321091",
-appId: "1:440243321091:web:3a6a0a27e4e418cf6b9136"
+const firebaseConfig={
+apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
+authDomain:"rifa-web-2b2f3.firebaseapp.com",
+projectId:"rifa-web-2b2f3",
+storageBucket:"rifa-web-2b2f3.firebasestorage.app",
+messagingSenderId:"440243321091",
+appId:"1:440243321091:web:3a6a0a27e4e418cf6b9136"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
 
 let numeroSeleccionado=null;
 const contenedor=document.getElementById("numeros");
 
+/* ESTADO RIFA */
+async function rifaAbierta(){
+const ref=doc(db,"configuracion","estado");
+const snap=await getDoc(ref);
+if(!snap.exists()) return true;
+return snap.data().abierto;
+}
+
+/* GRID NUMEROS */
 function crearGrid(ocupados){
 
 contenedor.innerHTML="";
@@ -129,6 +135,7 @@ document.getElementById("contador")
 .innerText=`Disponibles: ${100-ocupados.length}`;
 }
 
+/* TIEMPO REAL */
 onSnapshot(collection(db,"participantes"),snap=>{
 
 let usados=[];
@@ -141,13 +148,19 @@ crearGrid(usados);
 
 });
 
+/* REGISTRO */
 window.participar=async()=>{
+
+if(!(await rifaAbierta())){
+alert("🚫 Rifa cerrada");
+return;
+}
 
 const nombre=document.getElementById("nombre").value.trim();
 const telefono=document.getElementById("telefono").value.trim();
 
 if(!nombre||!telefono||!numeroSeleccionado){
-alert("Completa todo");
+alert("Completa todos los datos");
 return;
 }
 
@@ -158,14 +171,14 @@ numero:numeroSeleccionado,
 fecha:new Date()
 });
 
-const msg=`Hola, aparté el número ${numeroSeleccionado}`;
+const mensaje=
+`Hola, aparté el número ${numeroSeleccionado}`;
 
 window.location.href=
-`https://wa.me/526624446775?text=${encodeURIComponent(msg)}`;
+`https://wa.me/526624446775?text=${encodeURIComponent(mensaje)}`;
 
 };
 
 </script>
-
 </body>
 </html>
