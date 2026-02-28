@@ -2,10 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Panel Administrador Rifa</title>
+<title>Panel Admin</title>
 
 <style>
-
 body{
 font-family:Arial;
 text-align:center;
@@ -14,18 +13,14 @@ color:white;
 }
 
 button{
-padding:12px 18px;
-margin:8px;
-font-size:16px;
+padding:15px;
+margin:10px;
+font-size:18px;
 cursor:pointer;
-border:none;
-border-radius:8px;
 background:#25D366;
+border:none;
 color:white;
-}
-
-button:hover{
-opacity:.8;
+border-radius:8px;
 }
 
 table{
@@ -33,59 +28,33 @@ margin:auto;
 border-collapse:collapse;
 background:white;
 color:black;
-width:90%;
 }
 
 th,td{
 padding:10px;
 border:1px solid #ccc;
 }
-
-#animacionNumero{
-font-size:110px;
-margin:30px;
-color:gold;
-font-weight:bold;
-}
-
-.estado{
-font-size:22px;
-margin:10px;
-}
-
 </style>
-
 </head>
 
 <body>
 
-<h1>📊 PANEL ADMINISTRADOR</h1>
-
-<button onclick="toggleRifa()">
-🔓 Abrir / Cerrar Rifa
-</button>
-
-<h2 id="estadoRifa" class="estado"></h2>
-
-<hr>
+<h1>🎛 PANEL ADMIN</h1>
 
 <button onclick="elegirGanador()">
 🎰 SORTEAR GANADOR
 </button>
 
-<h1 id="animacionNumero">🎰</h1>
-
 <h2 id="ganador"></h2>
 
 <hr>
 
-<h3>📋 Participantes</h3>
+<h3>Participantes</h3>
 
 <table>
 <thead>
 <tr>
 <th>Nombre</th>
-<th>Teléfono</th>
 <th>Número</th>
 <th>Eliminar</th>
 </tr>
@@ -93,7 +62,6 @@ margin:10px;
 
 <tbody id="lista"></tbody>
 </table>
-
 
 <script type="module">
 
@@ -106,16 +74,11 @@ collection,
 onSnapshot,
 deleteDoc,
 doc,
-getDoc,
 setDoc,
 getDocs
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-
-/* =========================
-   FIREBASE
-========================= */
 
 const firebaseConfig={
 apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
@@ -131,11 +94,7 @@ const db=getFirestore(app);
 
 const tabla=document.getElementById("lista");
 
-
-/* =========================
-   PARTICIPANTES EN VIVO
-========================= */
-
+/* PARTICIPANTES */
 onSnapshot(collection(db,"participantes"),snap=>{
 
 tabla.innerHTML="";
@@ -147,12 +106,9 @@ const data=d.data();
 tabla.innerHTML+=`
 <tr>
 <td>${data.nombre}</td>
-<td>${data.telefono}</td>
 <td>#${data.numero}</td>
 <td>
-<button onclick="eliminar('${d.id}')">
-❌
-</button>
+<button onclick="eliminar('${d.id}')">❌</button>
 </td>
 </tr>
 `;
@@ -161,61 +117,15 @@ tabla.innerHTML+=`
 
 });
 
-
-/* =========================
-   ELIMINAR PARTICIPANTE
-========================= */
-
 window.eliminar=async(id)=>{
 await deleteDoc(doc(db,"participantes",id));
 };
 
 
-/* =========================
-   ABRIR / CERRAR RIFA
-========================= */
+/* 🎰 SORTEO */
+window.elegirGanador=async()=>{
 
-window.toggleRifa=async()=>{
-
-const ref=doc(db,"configuracion","estado");
-const snap=await getDoc(ref);
-
-let abierto=true;
-
-if(snap.exists()){
-abierto=snap.data().abierto;
-}
-
-await setDoc(ref,{
-abierto:!abierto
-});
-
-};
-
-
-/* =========================
-   MOSTRAR ESTADO EN VIVO
-========================= */
-
-onSnapshot(doc(db,"configuracion","estado"),snap=>{
-
-if(!snap.exists()) return;
-
-document.getElementById("estadoRifa").innerText=
-snap.data().abierto
-? "🟢 RIFA ABIERTA"
-: "🔴 RIFA CERRADA";
-
-});
-
-
-/* =========================
-   🎰 SORTEO CASINO
-========================= */
-
-window.elegirGanador = async () => {
-
-const snapshot =
+const snapshot=
 await getDocs(collection(db,"participantes"));
 
 let participantes=[];
@@ -234,77 +144,19 @@ participantes[
 Math.floor(Math.random()*participantes.length)
 ];
 
-const display=
-document.getElementById("animacionNumero");
-
-let numeros=
-participantes.map(p=>p.numero);
-
-let velocidad=40;
-let vueltas=0;
-
-const animar=setInterval(()=>{
-
-display.innerText=
-numeros[Math.floor(Math.random()*numeros.length)];
-
-vueltas++;
-
-if(vueltas>60){
-
-clearInterval(animar);
-
-display.innerText=
-"🏆 "+ganador.numero;
-
-guardarGanador(ganador);
-
-}
-
-},velocidad);
-
-};
-
-
-/* =========================
-   GUARDAR GANADOR
-========================= */
-
-async function guardarGanador(ganador){
-
 await setDoc(
 doc(db,"ganador","actual"),
-ganador
+{
+nombre:ganador.nombre,
+numero:ganador.numero,
+timestamp:Date.now()
+}
 );
 
 document.getElementById("ganador").innerHTML=
-`
-🏆 GANADOR<br>
-${ganador.nombre}<br>
-Número #${ganador.numero}
-`;
+`🏆 ${ganador.nombre} - #${ganador.numero}`;
 
-}
-
-
-/* =========================
-   GANADOR EN VIVO
-========================= */
-
-onSnapshot(doc(db,"ganador","actual"),snap=>{
-
-if(!snap.exists()) return;
-
-const g=snap.data();
-
-document.getElementById("ganador").innerHTML=
-`
-🏆 GANADOR<br>
-${g.nombre}<br>
-Número #${g.numero}
-`;
-
-});
+};
 
 </script>
 
