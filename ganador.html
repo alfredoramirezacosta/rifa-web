@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Ganador Oficial</title>
+
+<style>
+
+body{
+margin:0;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:black;
+color:white;
+font-family:Arial;
+text-align:center;
+}
+
+.container{
+animation:fade 1.5s ease-in-out;
+}
+
+h1{
+font-size:60px;
+color:gold;
+}
+
+.nombre{
+font-size:50px;
+margin-top:20px;
+}
+
+.numero{
+font-size:80px;
+color:#25D366;
+margin-top:20px;
+}
+
+@keyframes fade{
+from{opacity:0;transform:scale(.8);}
+to{opacity:1;transform:scale(1);}
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🏆 GANADOR OFICIAL 🏆</h1>
+
+<div id="nombre" class="nombre">
+Esperando sorteo...
+</div>
+
+<div id="numero" class="numero"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getFirestore,
+doc,
+onSnapshot
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+const firebaseConfig={
+apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
+authDomain:"rifa-web-2b2f3.firebaseapp.com",
+projectId:"rifa-web-2b2f3",
+storageBucket:"rifa-web-2b2f3.firebasestorage.app",
+messagingSenderId:"440243321091",
+appId:"1:440243321091:web:3a6a0a27e4e418cf6b9136"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+
+
+/* ESCUCHAR GANADOR EN VIVO */
+onSnapshot(doc(db,"ganador","actual"),snap=>{
+
+if(!snap.exists()) return;
+
+const g=snap.data();
+
+document.getElementById("nombre")
+.innerText=g.nombre;
+
+document.getElementById("numero")
+.innerText=`#${g.numero}`;
+
+});
+
+</script>
+
+</body>
+</html>
