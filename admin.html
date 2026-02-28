@@ -2,12 +2,15 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Admin Rifa</title>
+<title>Panel Admin</title>
 </head>
 
 <body>
 
 <h2>📊 Panel Administrador</h2>
+
+<button onclick="toggleRifa()">Abrir / Cerrar Rifa</button>
+<p id="estadoRifa"></p>
 
 <table border="1">
 <thead>
@@ -32,24 +35,27 @@ getFirestore,
 collection,
 onSnapshot,
 deleteDoc,
-doc
+doc,
+getDoc,
+setDoc
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-apiKey: "AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
-authDomain: "rifa-web-2b2f3.firebaseapp.com",
-projectId: "rifa-web-2b2f3",
-storageBucket: "rifa-web-2b2f3.firebasestorage.app",
-messagingSenderId: "440243321091",
-appId: "1:440243321091:web:3a6a0a27e4e418cf6b9136"
+const firebaseConfig={
+apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
+authDomain:"rifa-web-2b2f3.firebaseapp.com",
+projectId:"rifa-web-2b2f3",
+storageBucket:"rifa-web-2b2f3.firebasestorage.app",
+messagingSenderId:"440243321091",
+appId:"1:440243321091:web:3a6a0a27e4e418cf6b9136"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
 
 const tabla=document.getElementById("lista");
 
+/* PARTICIPANTES EN VIVO */
 onSnapshot(collection(db,"participantes"),snap=>{
 
 tabla.innerHTML="";
@@ -64,9 +70,7 @@ tabla.innerHTML+=`
 <td>${data.telefono}</td>
 <td>${data.numero}</td>
 <td>
-<button onclick="eliminar('${d.id}')">
-❌
-</button>
+<button onclick="eliminar('${d.id}')">❌</button>
 </td>
 </tr>
 `;
@@ -75,11 +79,40 @@ tabla.innerHTML+=`
 
 });
 
+/* ELIMINAR */
 window.eliminar=async(id)=>{
 await deleteDoc(doc(db,"participantes",id));
 };
 
-</script>
+/* ABRIR / CERRAR RIFA */
+window.toggleRifa=async()=>{
 
+const ref=doc(db,"configuracion","estado");
+const snap=await getDoc(ref);
+
+let actual=true;
+
+if(snap.exists()){
+actual=snap.data().abierto;
+}
+
+await setDoc(ref,{
+abierto:!actual
+});
+};
+
+/* MOSTRAR ESTADO */
+onSnapshot(doc(db,"configuracion","estado"),snap=>{
+
+if(!snap.exists()) return;
+
+document.getElementById("estadoRifa").innerText=
+snap.data().abierto
+? "🟢 Rifa ABIERTA"
+: "🔴 Rifa CERRADA";
+
+});
+
+</script>
 </body>
 </html>
