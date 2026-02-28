@@ -1,28 +1,68 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Panel Admin</title>
+<title>Panel Administrador</title>
+
+<style>
+
+body{
+font-family:Arial;
+text-align:center;
+background:#f2f2f2;
+}
+
+button{
+padding:12px;
+margin:10px;
+font-size:16px;
+cursor:pointer;
+}
+
+table{
+margin:auto;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:10px;
+border:1px solid #ccc;
+}
+
+#animacionNumero{
+font-size:90px;
+margin:30px;
+color:#25D366;
+font-weight:bold;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<h2>📊 Panel Administrador</h2>
+<h1>📊 PANEL ADMIN</h1>
 
 <button onclick="toggleRifa()">Abrir / Cerrar Rifa</button>
-<h3 id="estadoRifa"></h3>
+<h2 id="estadoRifa"></h2>
 
 <hr>
 
 <button onclick="elegirGanador()">
-🎰 Elegir Ganador
+🎰 Sortear Ganador
 </button>
+
+<h1 id="animacionNumero">🎰</h1>
 
 <h2 id="ganador"></h2>
 
 <hr>
 
-<table border="1">
+<h3>Participantes</h3>
+
+<table>
 <thead>
 <tr>
 <th>Nombre</th>
@@ -52,6 +92,7 @@ getDocs
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
 const firebaseConfig={
 apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
 authDomain:"rifa-web-2b2f3.firebaseapp.com",
@@ -66,7 +107,11 @@ const db=getFirestore(app);
 
 const tabla=document.getElementById("lista");
 
-/* PARTICIPANTES */
+
+/* =========================
+   PARTICIPANTES EN VIVO
+========================= */
+
 onSnapshot(collection(db,"participantes"),snap=>{
 
 tabla.innerHTML="";
@@ -90,12 +135,20 @@ tabla.innerHTML+=`
 
 });
 
-/* ELIMINAR */
+
+/* =========================
+   ELIMINAR
+========================= */
+
 window.eliminar=async(id)=>{
 await deleteDoc(doc(db,"participantes",id));
 };
 
-/* ABRIR / CERRAR */
+
+/* =========================
+   ABRIR / CERRAR RIFA
+========================= */
+
 window.toggleRifa=async()=>{
 
 const ref=doc(db,"configuracion","estado");
@@ -110,7 +163,11 @@ actual=snap.data().abierto;
 await setDoc(ref,{abierto:!actual});
 };
 
-/* ESTADO RIFA */
+
+/* =========================
+   MOSTRAR ESTADO
+========================= */
+
 onSnapshot(doc(db,"configuracion","estado"),snap=>{
 
 if(!snap.exists()) return;
@@ -123,10 +180,13 @@ snap.data().abierto
 });
 
 
-/* 🎰 GANADOR AUTOMATICO */
-window.elegirGanador=async()=>{
+/* =========================
+   🎰 SORTEO CON ANIMACION
+========================= */
 
-const snapshot=
+window.elegirGanador = async () => {
+
+const snapshot =
 await getDocs(collection(db,"participantes"));
 
 let participantes=[];
@@ -140,25 +200,62 @@ alert("No hay participantes");
 return;
 }
 
-const ganador=
+/* GANADOR REAL */
+const ganador =
 participantes[
 Math.floor(Math.random()*participantes.length)
 ];
 
+const display =
+document.getElementById("animacionNumero");
+
+let numeros =
+participantes.map(p=>p.numero);
+
+let vueltas=0;
+
+const animar=setInterval(()=>{
+
+const randomNumero=
+numeros[Math.floor(Math.random()*numeros.length)];
+
+display.innerText=randomNumero;
+
+vueltas++;
+
+if(vueltas>45){
+
+clearInterval(animar);
+
+/* NUMERO FINAL */
+display.innerText=ganador.numero;
+
 /* GUARDAR GANADOR */
+setTimeout(async()=>{
+
 await setDoc(
 doc(db,"ganador","actual"),
 ganador
 );
 
-alert(
-`GANADOR:\n${ganador.nombre}\nNúmero ${ganador.numero}`
-);
+document.getElementById("ganador").innerHTML=
+`🏆 GANADOR<br>
+${ganador.nombre}<br>
+Número ${ganador.numero}`;
+
+},800);
+
+}
+
+},60);
 
 };
 
 
-/* MOSTRAR GANADOR EN VIVO */
+/* =========================
+   GANADOR EN VIVO
+========================= */
+
 onSnapshot(doc(db,"ganador","actual"),snap=>{
 
 if(!snap.exists()) return;
@@ -166,9 +263,10 @@ if(!snap.exists()) return;
 const g=snap.data();
 
 document.getElementById("ganador").innerHTML=
-`🏆 GANADOR:<br>
+`🏆 GANADOR<br>
 ${g.nombre}<br>
 Número ${g.numero}`;
+
 });
 
 </script>
