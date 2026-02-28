@@ -1,33 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Ganador Rifa</title>
+<title>Ruleta Rifa</title>
 
 <style>
 
 body{
-    background:#111;
-    color:white;
-    text-align:center;
-    font-family:Arial;
+background:#111;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+flex-direction:column;
+color:white;
+font-family:Arial;
+overflow:hidden;
 }
 
-#ruleta{
-    font-size:80px;
-    margin-top:120px;
-    height:120px;
+canvas{
+background:#222;
+border-radius:50%;
+box-shadow:0 0 40px black;
 }
 
-.ganador{
-    font-size:120px;
-    color:gold;
-    animation:zoom 1s infinite alternate;
+#flecha{
+position:absolute;
+top:40px;
+font-size:60px;
+color:red;
 }
 
-@keyframes zoom{
-    from{transform:scale(1);}
-    to{transform:scale(1.2);}
+#ganador{
+margin-top:20px;
+font-size:40px;
+color:gold;
 }
 
 </style>
@@ -35,9 +42,11 @@ body{
 
 <body>
 
-<h1>🎰 SORTEO EN CURSO</h1>
+<div id="flecha">▼</div>
 
-<div id="ruleta">---</div>
+<canvas id="ruleta" width="500" height="500"></canvas>
+
+<div id="ganador"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -46,74 +55,174 @@ body{
 
 <script>
 
-const firebaseConfig = {
-apiKey: "AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
-authDomain: "rifa-web-2b2f3.firebaseapp.com",
-projectId: "rifa-web-2b2f3",
-storageBucket: "rifa-web-2b2f3.firebasestorage.app",
-messagingSenderId: "440243321091",
-appId: "1:440243321091:web:3a6a0a27e4e418cf6b9136"
+const firebaseConfig={
+apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
+authDomain:"rifa-web-2b2f3.firebaseapp.com",
+projectId:"rifa-web-2b2f3",
+storageBucket:"rifa-web-2b2f3.firebasestorage.app",
+messagingSenderId:"440243321091",
+appId:"1:440243321091:web:3a6a0a27e4e418cf6b9136"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const db=firebase.firestore();
 
-let animando = false;
+const canvas=document.getElementById("ruleta");
+const ctx=canvas.getContext("2d");
 
-db.collection("config")
-.doc("ganador")
-.onSnapshot((doc)=>{
+let numeros=[];
+let anguloActual=0;
+let girando=false;
 
- if(!doc.exists) return;
 
- let numeroGanador = doc.data().numero;
+/* =====================
+DIBUJAR RULETA
+===================== */
 
- if(!animando){
-     girarRuleta(numeroGanador);
- }
+function dibujar(){
 
-});
+let arc=(2*Math.PI)/numeros.length;
 
-function girarRuleta(ganador){
+for(let i=0;i<numeros.length;i++){
 
-animando=true;
+ctx.beginPath();
+ctx.fillStyle=i%2?"#25D366":"#FFD700";
 
-let display=document.getElementById("ruleta");
+ctx.moveTo(250,250);
+ctx.arc(
+250,
+250,
+250,
+arc*i+anguloActual,
+arc*(i+1)+anguloActual
+);
 
-let vueltas=0;
+ctx.fill();
 
-let intervalo=setInterval(()=>{
+ctx.save();
+ctx.translate(250,250);
+ctx.rotate(arc*i+arc/2+anguloActual);
 
- display.innerText=
- "#" + Math.floor(Math.random()*100)+1;
+ctx.fillStyle="black";
+ctx.font="18px Arial";
+ctx.fillText(numeros[i],170,5);
 
- vueltas++;
-
- if(vueltas>40){
-
-   clearInterval(intervalo);
-
-   display.innerText="#"+ganador;
-   display.classList.add("ganador");
-
-   lanzarConfeti();
-
-   animando=false;
- }
-
-},80);
+ctx.restore();
+}
 
 }
+
+
+/* =====================
+OBTENER PARTICIPANTES
+===================== */
+
+async function cargarNumeros(){
+
+let snap=
+await db.collection("participantes").get();
+
+numeros=[];
+
+snap.forEach(d=>{
+numeros.push(d.data().numero);
+});
+
+dibujar();
+}
+
+cargarNumeros();
+
+
+/* =====================
+GIRAR RULETA
+===================== */
+
+function girarRuleta(numeroGanador){
+
+if(girando) return;
+girando=true;
+
+let index=numeros.indexOf(numeroGanador);
+
+let arc=(2*Math.PI)/numeros.length;
+
+let destino=
+(3*Math.PI/2) -
+(index*arc) -
+(arc/2);
+
+let vueltas=8;
+
+let objetivo=
+anguloActual+
+(vueltas*2*Math.PI)+destino;
+
+let velocidad=0.3;
+
+function animar(){
+
+anguloActual+=velocidad;
+
+velocidad*=0.985;
+
+ctx.clearRect(0,0,500,500);
+dibujar();
+
+if(anguloActual<objetivo){
+requestAnimationFrame(animar);
+}else{
+
+mostrarGanador(numeroGanador);
+lanzarConfeti();
+girando=false;
+
+}
+
+}
+
+animar();
+}
+
+
+/* =====================
+GANADOR
+===================== */
+
+function mostrarGanador(num){
+
+document.getElementById("ganador")
+.innerHTML=`🏆 GANADOR #${num}`;
+
+}
+
 
 function lanzarConfeti(){
 
 confetti({
- particleCount:300,
- spread:200,
- origin:{y:0.6}
+particleCount:400,
+spread:180,
+origin:{y:0.6}
 });
 
 }
+
+
+/* =====================
+ESCUCHAR FIREBASE
+===================== */
+
+db.collection("ganador")
+.doc("actual")
+.onSnapshot(doc=>{
+
+if(!doc.exists) return;
+
+let ganador=doc.data().numero;
+
+girarRuleta(ganador);
+
+});
 
 </script>
 
