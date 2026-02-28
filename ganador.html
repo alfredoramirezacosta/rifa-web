@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
 <title>Ganador</title>
 
@@ -10,85 +11,61 @@
 
 body{
 margin:0;
-background:radial-gradient(circle,#111,#000);
+background:#000;
+color:white;
+font-family:Arial;
 display:flex;
 flex-direction:column;
 justify-content:center;
 align-items:center;
-min-height:100vh;
-color:white;
-font-family:Arial, Helvetica, sans-serif;
+height:100vh;
 overflow:hidden;
-padding:20px;
-box-sizing:border-box;
 }
 
-/* CONTENEDOR RULETA */
-.ruleta-container{
-position:relative;
-width:90vw;
-max-width:500px;
-aspect-ratio:1/1;
+/* CAJA SORTEO */
+#slotBox{
+width:85vw;
+max-width:400px;
+height:160px;
+border-radius:20px;
+background:#111;
 display:flex;
 justify-content:center;
 align-items:center;
-margin:auto;
-}
-
-/* RULETA */
-canvas{
-width:100% !important;
-height:100% !important;
-border-radius:50%;
+font-size:90px;
+font-weight:bold;
+color:#FFD700;
 box-shadow:
-0 0 40px orange,
-0 0 80px rgba(255,140,0,.6);
-}
-
-/* FLECHA */
-.pointer{
-position:absolute;
-top:-15px;
-left:50%;
-transform:translateX(-50%);
-width:0;
-height:0;
-border-left:15px solid transparent;
-border-right:15px solid transparent;
-border-bottom:25px solid red;
-z-index:10;
+0 0 30px orange,
+inset 0 0 25px rgba(255,140,0,.6);
 }
 
 /* GANADOR */
-#ganador{
-margin-top:30px;
+#resultado{
+margin-top:40px;
 text-align:center;
-animation:fadeIn 1s ease;
+opacity:0;
+transform:scale(.6);
+transition:.6s;
 }
 
 .numero{
-font-size:60px;
-font-weight:bold;
+font-size:65px;
 color:gold;
 }
 
 .nombre{
-font-size:28px;
+font-size:30px;
 margin-top:10px;
 }
 
-@keyframes fadeIn{
-from{opacity:0;transform:scale(.7)}
-to{opacity:1;transform:scale(1)}
-}
-
+/* CONFETI */
 .confeti{
 position:fixed;
 width:10px;
 height:10px;
-background:red;
 top:-10px;
-animation:caer 3s linear forwards;
+animation:caer linear forwards;
 }
 
 @keyframes caer{
@@ -103,14 +80,10 @@ opacity:0;
 
 <body>
 
-<div class="ruleta-container">
-<div class="pointer"></div>
-<canvas id="ruleta"></canvas>
-</div>
+<div id="slotBox">🎰</div>
 
-<div id="ganador"></div>
+<div id="resultado"></div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
@@ -119,30 +92,19 @@ opacity:0;
 const firebaseConfig={
 apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
 authDomain:"rifa-web-2b2f3.firebaseapp.com",
-projectId:"rifa-web-2b2f3",
-storageBucket:"rifa-web-2b2f3.firebasestorage.app",
-messagingSenderId:"440243321091",
-appId:"1:440243321091:web:3a6a0a27e4e418cf6b9136"
+projectId:"rifa-web-2b2f3"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
-const canvas=document.getElementById("ruleta");
-const ctx=canvas.getContext("2d");
-
 let participantes=[];
-let anguloActual=0;
+const box=document.getElementById("slotBox");
 
-/* AJUSTAR RESOLUCIÓN */
-function resizeCanvas(){
-canvas.width=canvas.offsetWidth;
-canvas.height=canvas.offsetHeight;
-dibujar();
-}
-window.addEventListener("resize",resizeCanvas);
+/* =========================
+   CARGAR PARTICIPANTES
+========================= */
 
-/* CARGAR PARTICIPANTES */
 db.collection("participantes")
 .orderBy("numero")
 .get()
@@ -152,104 +114,88 @@ snapshot.forEach(doc=>{
 participantes.push(doc.data());
 });
 
-resizeCanvas();
 escucharGanador();
 
 });
 
-/* DIBUJAR RULETA */
-function dibujar(){
+/* =========================
+   ANIMACION SORTEO REALISTA
+========================= */
 
-let total=participantes.length;
-if(!total)return;
+function animarSorteo(ganador){
 
-let angulo=(2*Math.PI)/total;
+let velocidad=40;
+let tiempoTotal=10000;
+let inicio=Date.now();
 
-for(let i=0;i<total;i++){
+function loop(){
 
-ctx.beginPath();
-ctx.moveTo(canvas.width/2,canvas.height/2);
+let transcurrido=
+Date.now()-inicio;
 
-ctx.fillStyle=
-i%2==0?"#111":"#222";
+let progreso=
+transcurrido/tiempoTotal;
 
-ctx.arc(
-canvas.width/2,
-canvas.height/2,
-canvas.width/2,
-angulo*i+anguloActual,
-angulo*(i+1)+anguloActual
-);
+/* desaceleración */
+velocidad=40+(progreso*200);
 
-ctx.fill();
+let random=
+participantes[
+Math.floor(
+Math.random()*participantes.length
+)
+];
 
-ctx.save();
-ctx.translate(canvas.width/2,canvas.height/2);
-ctx.rotate(angulo*i+angulo/2+anguloActual);
+box.innerText=random.numero;
 
-ctx.fillStyle="white";
-ctx.font="bold 16px Arial";
-ctx.fillText(
-"#"+participantes[i].numero,
-canvas.width/3,
-5
-);
+if(transcurrido<tiempoTotal){
 
-ctx.restore();
-}
-
-}
-
-/* ANIMACIÓN GIRO */
-function girarHasta(indice){
-
-let total=participantes.length;
-let angulo=(2*Math.PI)/total;
-
-let destino=
-(2*Math.PI*6)+
-((3*Math.PI/2)-(indice*angulo));
-
-let inicio=null;
-
-function animar(t){
-
-if(!inicio)inicio=t;
-
-let progreso=(t-inicio)/5000;
-
-if(progreso<1){
-
-anguloActual=destino*easeOut(progreso);
-ctx.clearRect(0,0,canvas.width,canvas.height);
-dibujar();
-
-requestAnimationFrame(animar);
+setTimeout(loop,velocidad);
 
 }else{
 
-anguloActual=destino;
-dibujar();
+box.innerText=ganador.numero;
+
+setTimeout(()=>{
+mostrarGanador(ganador);
 confeti();
-mostrar(participantes[indice]);
+},600);
 
 }
 
 }
 
-requestAnimationFrame(animar);
+loop();
 }
 
-function easeOut(t){
-return 1-Math.pow(1-t,4);
+/* =========================
+   MOSTRAR GANADOR
+========================= */
+
+function mostrarGanador(g){
+
+const r=document.getElementById("resultado");
+
+r.innerHTML=`
+🏆 GANADOR 🏆
+<div class="numero">#${g.numero}</div>
+<div class="nombre">${g.nombre}</div>
+`;
+
+r.style.opacity=1;
+r.style.transform="scale(1)";
 }
 
-/* CONFETI */
+/* =========================
+   CONFETI
+========================= */
+
 function confeti(){
 
-for(let i=0;i<120;i++){
+for(let i=0;i<150;i++){
 
 let c=document.createElement("div");
+
 c.className="confeti";
 
 c.style.left=Math.random()*100+"vw";
@@ -257,44 +203,27 @@ c.style.background=
 `hsl(${Math.random()*360},100%,50%)`;
 
 c.style.animationDuration=
-(2+Math.random()*2)+"s";
+(2+Math.random()*3)+"s";
 
 document.body.appendChild(c);
 
-setTimeout(()=>c.remove(),4000);
+setTimeout(()=>c.remove(),5000);
 }
 }
 
-/* MOSTRAR GANADOR */
-function mostrar(g){
+/* =========================
+   ESCUCHAR GANADOR ADMIN
+========================= */
 
-document.getElementById("ganador").innerHTML=
-`
-🏆 GANADOR 🏆
-<div class="numero">#${g.numero}</div>
-<div class="nombre">${g.nombre}</div>
-`;
-}
-
-/* ESCUCHAR GANADOR AUTOMÁTICO */
 function escucharGanador(){
 
-db.collection("config")
-.doc("ganador")
+db.collection("ganador")
+.doc("actual")
 .onSnapshot(doc=>{
 
-if(!doc.exists)return;
+if(!doc.exists())return;
 
-let numero=doc.data().numero;
-
-let indice=
-participantes.findIndex(
-p=>p.numero==numero
-);
-
-if(indice>=0){
-girarHasta(indice);
-}
+animarSorteo(doc.data());
 
 });
 
