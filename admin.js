@@ -11,7 +11,7 @@ function login(){
 
 }
 
- function cargarParticipantes(){
+function cargarParticipantes(){
 
  db.collection("participantes")
  .orderBy("numero")
@@ -36,4 +36,3 @@ function login(){
  });
 
 }
-
