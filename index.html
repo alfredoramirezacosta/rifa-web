@@ -151,18 +151,6 @@ alert("Completa todo");
 return;
 }
 
-const q=query(
-collection(db,"participantes"),
-where("telefono","==",telefono)
-);
-
-const existe=await getDocs(q);
-
-if(!existe.empty){
-alert("Este teléfono ya participó");
-return;
-}
-
 await addDoc(collection(db,"participantes"),{
 nombre,
 telefono,
