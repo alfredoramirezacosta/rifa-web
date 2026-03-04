@@ -3,45 +3,42 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width">
 
 <title>Ganador</title>
 
 <style>
 
 body{
-margin:0;
 background:black;
 color:white;
 display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
-font-family:-apple-system;
-text-align:center;
+font-family:Arial;
+flex-direction:column;
 }
 
-.numero{
-font-size:18vw;
+#numero{
+font-size:100px;
 color:gold;
 }
 
-.nombre{
-font-size:7vw;
-margin-top:20px;
+#nombre{
+font-size:45px;
 }
 
 </style>
+
 </head>
 
 <body>
 
-<div>
 <h1>🏆 GANADOR</h1>
-<div id="numero" class="numero">--</div>
-<div id="nombre" class="nombre"></div>
-</div>
+
+<div id="numero">--</div>
+<div id="nombre"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -64,18 +61,21 @@ db.collection("config")
 .onSnapshot(doc=>{
 
 if(!doc.exists){
-numero.innerText="--";
-nombre.innerText="";
+document.getElementById("numero").innerText="--";
+document.getElementById("nombre").innerText="";
 return;
 }
 
 let g=doc.data();
 
-numero.innerText="#"+g.numero;
-nombre.innerText=g.nombre;
+document.getElementById("numero").innerText=
+"#"+g.numero;
+
+document.getElementById("nombre").innerText=
+g.nombre;
 
 confetti({
-particleCount:250,
+particleCount:200,
 spread:160
 });
 
