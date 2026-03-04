@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>Registro Rifa</title>
 
@@ -20,7 +20,7 @@ padding:15px;
 input{
 width:95%;
 padding:15px;
-margin:8px 0;
+margin:10px 0;
 font-size:18px;
 border-radius:10px;
 border:none;
@@ -36,6 +36,7 @@ border-radius:12px;
 background:#00c853;
 color:white;
 font-weight:bold;
+cursor:pointer;
 }
 
 #numeros{
@@ -70,27 +71,37 @@ font-weight:bold;
 
 <h2>🎟 Registro Participante</h2>
 
-<input id="telefono"
-placeholder="Teléfono (10 dígitos)"
+<!-- TELEFONO -->
+<input
+id="telefono"
+type="tel"
+inputmode="numeric"
 maxlength="10"
-oninput="buscarCliente()">
+placeholder="Teléfono (10 dígitos)"
+oninput="validarTelefono()">
 
-<input id="nombre"
+<!-- NOMBRE -->
+<input
+id="nombre"
 placeholder="Nombre completo">
 
 <h3>Números disponibles</h3>
-
 <div id="numeros"></div>
 
-<button onclick="numerosAleatorios()">🎲 Elegir al azar</button>
+<button onclick="numerosAleatorios()">🎲 Números al azar</button>
 
 <button onclick="registrar()">✅ Registrar</button>
 
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 <script>
+
+/* ======================
+FIREBASE CONFIG
+======================*/
 
 const firebaseConfig={
 apiKey:"TU_APIKEY",
@@ -101,19 +112,37 @@ projectId:"TU_PROJECTID"
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
+
 let seleccionados=[];
 
-/* =========================
-BUSCAR CLIENTE AUTOMATICO
-=========================*/
 
-async function buscarCliente(){
+/* ======================
+SOLO NUMEROS TELEFONO
+======================*/
 
-let telefono=document.getElementById("telefono").value;
+function validarTelefono(){
 
-if(!/^[0-9]{10}$/.test(telefono)) return;
+let input=document.getElementById("telefono");
 
-let doc=await db.collection("clientes")
+/* elimina TODO lo que no sea número */
+input.value=input.value.replace(/\D/g,'');
+
+/* buscar cliente solo si ya tiene 10 */
+if(input.value.length===10){
+buscarCliente(input.value);
+}
+
+}
+
+
+/* ======================
+AUTOLLENAR NOMBRE
+======================*/
+
+async function buscarCliente(telefono){
+
+let doc=
+await db.collection("clientes")
 .doc(telefono)
 .get();
 
@@ -124,9 +153,10 @@ doc.data().nombre;
 
 }
 
-/* =========================
-CARGAR NUMEROS
-=========================*/
+
+/* ======================
+CARGAR TABLERO
+======================*/
 
 function cargarNumeros(){
 
@@ -161,6 +191,7 @@ cont.appendChild(div);
 
 }
 
+
 function toggleNumero(num,el){
 
 if(seleccionados.includes(num)){
@@ -174,27 +205,35 @@ el.classList.add("seleccionado");
 
 }
 
-/* =========================
-NUMEROS ALEATORIOS
-=========================*/
+
+/* ======================
+ALEATORIOS
+======================*/
 
 function numerosAleatorios(){
+
+let libres=[];
+
+document
+.querySelectorAll(".numero:not(.ocupado)")
+.forEach(n=>{
+libres.push(parseInt(n.innerText));
+});
+
+let cantidad=parseInt(
+prompt("¿Cuántos números?")
+);
+
+if(!cantidad || cantidad<=0) return;
 
 seleccionados=[];
 
 document.querySelectorAll(".numero")
 .forEach(n=>n.classList.remove("seleccionado"));
 
-let libres=[];
-
-document.querySelectorAll(".numero:not(.ocupado)")
-.forEach(n=>{
-libres.push(parseInt(n.innerText));
-});
-
-let cantidad=parseInt(prompt("Cantidad de números"));
-
 for(let i=0;i<cantidad;i++){
+
+if(libres.length===0) break;
 
 let r=libres.splice(
 Math.floor(Math.random()*libres.length),1
@@ -212,9 +251,10 @@ d.classList.add("seleccionado");
 
 }
 
-/* =========================
-REGISTRAR
-=========================*/
+
+/* ======================
+REGISTRAR ✅
+======================*/
 
 async function registrar(){
 
@@ -224,13 +264,16 @@ document.getElementById("nombre").value.trim();
 let telefono=
 document.getElementById("telefono").value.trim();
 
-if(nombre===""||telefono===""){
-alert("Complete los campos");
+
+/* VALIDACIONES */
+
+if(telefono.length!==10){
+alert("Teléfono inválido");
 return;
 }
 
-if(!/^[0-9]{10}$/.test(telefono)){
-alert("Teléfono inválido");
+if(nombre===""){
+alert("Ingrese nombre");
 return;
 }
 
@@ -239,6 +282,7 @@ alert("Seleccione números");
 return;
 }
 
+
 /* GUARDAR CLIENTE */
 await db.collection("clientes")
 .doc(telefono)
@@ -246,7 +290,8 @@ await db.collection("clientes")
 nombre:nombre
 });
 
-/* GUARDAR PARTICIPACIONES */
+
+/* GUARDAR NUMEROS */
 for(const numero of seleccionados){
 
 await db.collection("participantes").add({
@@ -255,21 +300,25 @@ telefono,
 numero
 });
 
+}
+
+
+/* WHATSAPP */
 let mensaje=
 `Hola ${nombre} ✅
-Tu número de rifa es: ${numero}`;
+Tus números son: ${seleccionados.join(", ")}`;
 
 window.open(
 `https://wa.me/52${telefono}?text=${encodeURIComponent(mensaje)}`
 );
 
-}
 
-alert("Registro exitoso");
+alert("✅ Registro exitoso");
 
 location.reload();
 
 }
+
 
 cargarNumeros();
 
