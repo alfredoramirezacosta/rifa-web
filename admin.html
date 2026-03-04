@@ -1,74 +1,47 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width,initial-scale=1">
-
 <title>Panel Admin</title>
 
 <style>
-
 body{
-margin:0;
+font-family:Arial;
 background:#111;
 color:white;
-font-family:-apple-system;
-padding:15px;
-}
-
-h1{
 text-align:center;
 }
 
 button{
-width:100%;
-padding:18px;
-font-size:20px;
-margin:10px 0;
-border-radius:14px;
+padding:12px;
+margin:10px;
+font-size:16px;
+cursor:pointer;
 border:none;
-}
-
-.sortear{
-background:#ff9800;
-color:white;
-}
-
-.reset{
-background:red;
-color:white;
+border-radius:8px;
 }
 
 table{
-width:100%;
-margin-top:20px;
+margin:auto;
 background:white;
 color:black;
-border-radius:10px;
-overflow:hidden;
+border-collapse:collapse;
 }
 
 th,td{
-padding:12px;
-font-size:16px;
+padding:10px;
+border:1px solid #ccc;
 }
-
 </style>
 </head>
 
 <body>
 
-<h1>🎛 Panel Admin</h1>
+<h1>🎛 PANEL ADMIN</h1>
 
-<button class="sortear"
-onclick="elegirGanador()">
-🎰 Sortear Ganador
-</button>
+<button onclick="elegirGanador()">🎰 Sortear Ganador</button>
 
-<button class="reset"
-onclick="resetearRifa()">
+<button onclick="resetearRifa()" style="background:red;color:white">
 🔄 Resetear Rifa
 </button>
 
@@ -78,7 +51,7 @@ onclick="resetearRifa()">
 <thead>
 <tr>
 <th>Nombre</th>
-<th>#</th>
+<th>Número</th>
 </tr>
 </thead>
 <tbody id="lista"></tbody>
