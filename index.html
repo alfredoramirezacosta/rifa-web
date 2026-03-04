@@ -242,19 +242,19 @@ d.classList.add("seleccionado");
 }
 
 
-/* ================= REGISTRAR ================= */
-
 async function registrar(){
 
 try{
 
-let nombre=
+let nombre =
 document.getElementById("nombre").value.trim();
 
-let telefono=
+let telefono =
 document.getElementById("telefono").value.trim();
 
-if(telefono.length!==10){
+/* VALIDACIONES */
+
+if(!/^[0-9]{10}$/.test(telefono)){
 alert("Teléfono inválido");
 return;
 }
@@ -269,12 +269,12 @@ alert("Seleccione números");
 return;
 }
 
-/* guardar cliente */
+/* GUARDAR CLIENTE */
 await db.collection("clientes")
 .doc(telefono)
 .set({nombre});
 
-/* guardar números */
+/* GUARDAR NUMEROS */
 for(const numero of seleccionados){
 
 await db.collection("participantes").add({
@@ -287,21 +287,28 @@ numero
 
 /* ================= WHATSAPP ================= */
 
-const NUMERO_WHATSAPP="526624446775";
-
 /* ordenar números */
 seleccionados.sort((a,b)=>a-b);
 
-/* crear mensaje */
-let mensaje=
-`🎟 *Registro Rifa*%0A%0A`+
+/* mensaje */
+let mensaje =
+`🎟 Gracias por participar en la rifa.%0A%0A`+
 `👤 Nombre: ${nombre}%0A`+
-`📱 Teléfono: ${telefono}%0A`+
-`🎯 Números: ${seleccionados.join(", ")}`;
+`🎯 Números: ${seleccionados.join(", ")}%0A%0A`+
+`Premio:%0A`+
+`24 latas a elegir:%0A`+
+`• Tecate 355ml%0A`+
+`• Coors 355ml%0A`+
+`• Indio 355ml%0A`+
+`• Amstel 355ml%0A%0A`+
+`✅ ¡Mucha suerte!`;
 
-/* abrir whatsapp */
+/* NUMERO CLIENTE */
+let numeroWhatsApp = "52" + telefono;
+
+/* abrir TU whatsapp hacia el cliente */
 window.open(
-`https://wa.me/${NUMERO_WHATSAPP}?text=${mensaje}`,
+`https://wa.me/${numeroWhatsApp}?text=${mensaje}`,
 "_blank"
 );
 
