@@ -1,7 +1,13 @@
+// ==========================
+// FIREBASE CONFIG
+// ==========================
 const firebaseConfig={
 apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
 authDomain:"rifa-web-2b2f3.firebaseapp.com",
-projectId:"rifa-web-2b2f3"
+projectId:"rifa-web-2b2f3",
+storageBucket:"rifa-web-2b2f3.firebasestorage.app",
+messagingSenderId:"440243321091",
+appId:"1:440243321091:web:3a6a0a27e4e418cf6b9136"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -11,9 +17,9 @@ const tabla=document.getElementById("lista");
 const ganadorHTML=document.getElementById("ganador");
 
 
-// =================
-// PARTICIPANTES LIVE
-// =================
+// ==========================
+// PARTICIPANTES EN VIVO
+// ==========================
 db.collection("participantes")
 .orderBy("numero")
 .onSnapshot(snapshot=>{
@@ -28,6 +34,12 @@ tabla.innerHTML+=`
 <tr>
 <td>${d.nombre}</td>
 <td>#${d.numero}</td>
+<td>
+<button class="eliminar"
+onclick="eliminarNumero('${doc.id}')">
+❌
+</button>
+</td>
 </tr>
 `;
 
@@ -36,27 +48,44 @@ tabla.innerHTML+=`
 });
 
 
-// =================
+// ==========================
+// ELIMINAR NUMERO
+// ==========================
+async function eliminarNumero(id){
+
+let ok=confirm("¿Eliminar participante?");
+if(!ok) return;
+
+await db.collection("participantes")
+.doc(id)
+.delete();
+
+}
+
+
+// ==========================
 // ELEGIR GANADOR
-// =================
+// ==========================
 async function elegirGanador(){
 
-let snap=
+let snapshot=
 await db.collection("participantes").get();
 
-if(snap.empty){
+if(snapshot.empty){
 alert("No hay participantes");
 return;
 }
 
-let lista=[];
+let participantes=[];
 
-snap.forEach(doc=>{
-lista.push(doc.data());
+snapshot.forEach(doc=>{
+participantes.push(doc.data());
 });
 
 let ganador=
-lista[Math.floor(Math.random()*lista.length)];
+participantes[
+Math.floor(Math.random()*participantes.length)
+];
 
 await db.collection("config")
 .doc("ganador")
@@ -68,22 +97,26 @@ fecha:new Date()
 
 ganadorHTML.innerHTML=
 `🏆 ${ganador.nombre} - #${ganador.numero}`;
+
 }
 
 
-// =================
+// ==========================
 // RESET RIFA
-// =================
+// ==========================
 async function resetearRifa(){
 
-if(!confirm("⚠️ Se borrará toda la rifa")) return;
+let confirmar=
+confirm("⚠️ Se borrará TODA la rifa");
 
-let snap=
+if(!confirmar) return;
+
+let snapshot=
 await db.collection("participantes").get();
 
 let batch=db.batch();
 
-snap.forEach(doc=>{
+snapshot.forEach(doc=>{
 batch.delete(doc.ref);
 });
 
