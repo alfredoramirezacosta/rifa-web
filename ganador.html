@@ -10,35 +10,49 @@
 <style>
 
 body{
-background:black;
-color:white;
+margin:0;
+height:100vh;
+background:#000;
 display:flex;
 justify-content:center;
 align-items:center;
-height:100vh;
 font-family:Arial;
-flex-direction:column;
+color:white;
 }
 
-#numero{
-font-size:100px;
+.card{
+background:#1c1c1c;
+padding:40px;
+border-radius:20px;
+width:90%;
+max-width:420px;
+text-align:center;
+}
+
+.numero{
+font-size:80px;
 color:gold;
+font-weight:bold;
 }
 
-#nombre{
-font-size:45px;
+.nombre{
+font-size:32px;
+margin-top:15px;
 }
 
 </style>
-
 </head>
 
 <body>
 
-<h1>🏆 GANADOR</h1>
+<div class="card">
 
-<div id="numero">--</div>
-<div id="nombre"></div>
+<h2>🏆 GANADOR</h2>
+
+<div class="numero" id="numero">--</div>
+<div class="nombre" id="nombre"></div>
+
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -61,22 +75,19 @@ db.collection("config")
 .onSnapshot(doc=>{
 
 if(!doc.exists){
-document.getElementById("numero").innerText="--";
-document.getElementById("nombre").innerText="";
+numero.innerText="--";
+nombre.innerText="";
 return;
 }
 
 let g=doc.data();
 
-document.getElementById("numero").innerText=
-"#"+g.numero;
-
-document.getElementById("nombre").innerText=
-g.nombre;
+numero.innerText="#"+g.numero;
+nombre.innerText=g.nombre;
 
 confetti({
-particleCount:200,
-spread:160
+particleCount:250,
+spread:180
 });
 
 });
