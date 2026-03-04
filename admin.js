@@ -16,7 +16,88 @@ function login(){
 }
 
 
-// =============================
+// =============================const firebaseConfig={
+apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
+authDomain:"rifa-web-2b2f3.firebaseapp.com",
+projectId:"rifa-web-2b2f3"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+
+const tabla=document.getElementById("lista");
+
+db.collection("participantes")
+.onSnapshot(snapshot=>{
+
+tabla.innerHTML="";
+
+snapshot.forEach(doc=>{
+
+let d=doc.data();
+
+tabla.innerHTML+=`
+<tr>
+<td>${d.nombre}</td>
+<td>#${d.numero}</td>
+</tr>`;
+});
+
+});
+
+function elegirGanador(){
+
+db.collection("participantes").get()
+.then(snapshot=>{
+
+let participantes=[];
+
+snapshot.forEach(doc=>{
+participantes.push(doc.data());
+});
+
+if(participantes.length===0){
+alert("Sin participantes");
+return;
+}
+
+let ganador=
+participantes[Math.floor(Math.random()*participantes.length)];
+
+db.collection("config")
+.doc("ganador")
+.set(ganador);
+
+document.getElementById("ganador").innerHTML=
+`🏆 ${ganador.nombre} - #${ganador.numero}`;
+
+});
+}
+
+
+function resetearRifa(){
+
+if(!confirm("¿Resetear rifa?")) return;
+
+db.collection("participantes")
+.get()
+.then(snapshot=>{
+
+let batch=db.batch();
+
+snapshot.forEach(doc=>{
+batch.delete(doc.ref);
+});
+
+return batch.commit();
+})
+.then(()=>{
+return db.collection("config")
+.doc("ganador")
+.delete();
+});
+
+}
 // CARGAR PARTICIPANTES EN VIVO
 // =============================
 function cargarParticipantes(){
