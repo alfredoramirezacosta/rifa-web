@@ -285,6 +285,26 @@ numero
 
 }
 
+/* ================= WHATSAPP ================= */
+
+const NUMERO_WHATSAPP="526624446775";
+
+/* ordenar números */
+seleccionados.sort((a,b)=>a-b);
+
+/* crear mensaje */
+let mensaje=
+`🎟 *Registro Rifa*%0A%0A`+
+`👤 Nombre: ${nombre}%0A`+
+`📱 Teléfono: ${telefono}%0A`+
+`🎯 Números: ${seleccionados.join(", ")}`;
+
+/* abrir whatsapp */
+window.open(
+`https://wa.me/${NUMERO_WHATSAPP}?text=${mensaje}`,
+"_blank"
+);
+
 alert("✅ Registro exitoso");
 
 location.reload();
