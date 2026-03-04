@@ -13,56 +13,77 @@ body{
 font-family:Arial;
 background:#111;
 color:white;
+text-align:center;
 margin:0;
 padding:15px;
-text-align:center;
 }
 
 h1{
-font-size:28px;
+margin-bottom:20px;
 }
 
 button{
-width:100%;
-padding:18px;
-margin:10px 0;
-font-size:20px;
+padding:14px;
+margin:8px;
+font-size:18px;
 border:none;
-border-radius:12px;
-font-weight:bold;
+border-radius:10px;
+cursor:pointer;
+width:90%;
+max-width:320px;
 }
 
-.ganar{
-background:#00c853;
+.sortear{
+background:#25D366;
 color:white;
 }
 
 .reset{
-background:#d50000;
+background:red;
 color:white;
 }
 
 table{
 width:100%;
+max-width:600px;
+margin:auto;
 background:white;
 color:black;
+border-collapse:collapse;
 border-radius:10px;
 overflow:hidden;
 }
 
-td{
+th,td{
 padding:12px;
 border-bottom:1px solid #ddd;
+font-size:18px;
+}
+
+.eliminar{
+background:red;
+color:white;
+border:none;
+padding:8px 12px;
+border-radius:8px;
+font-size:18px;
+}
+
+#ganador{
+font-size:24px;
+margin:20px;
+color:#00ffae;
 }
 
 </style>
+
 </head>
 
 <body>
 
 <h1>🎛 PANEL ADMIN</h1>
 
-<button class="ganar" onclick="elegirGanador()">
+<button class="sortear" onclick="elegirGanador()">
 🎰 Sortear Ganador
 </button>
 
@@ -73,11 +94,23 @@ border-bottom:1px solid #ddd;
 <h2 id="ganador"></h2>
 
 <table>
+
+<thead>
+<tr>
+<th>Nombre</th>
+<th>Número</th>
+<th>Eliminar</th>
+</tr>
+</thead>
+
 <tbody id="lista"></tbody>
+
 </table>
+
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
 <script src="admin.js"></script>
 
 </body>
