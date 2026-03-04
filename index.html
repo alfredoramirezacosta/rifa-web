@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Registro Rifa</title>
 
@@ -18,73 +18,55 @@ margin:0;
 padding:15px;
 }
 
+h1{
+font-size:26px;
+}
+
 input{
-padding:14px;
-margin:8px;
+width:95%;
+padding:15px;
+margin:8px 0;
 font-size:18px;
-width:90%;
-max-width:320px;
-border-radius:8px;
+border-radius:10px;
 border:none;
 }
 
 button{
-padding:15px;
-font-size:18px;
-background:#25D366;
-border:none;
-color:white;
-border-radius:10px;
+width:95%;
+padding:18px;
 margin-top:10px;
-width:90%;
-max-width:320px;
-cursor:pointer;
-}
-
-button:disabled{
-opacity:.5;
-background:#555;
-cursor:not-allowed;
+font-size:20px;
+border:none;
+border-radius:12px;
+background:#00c853;
+color:white;
+font-weight:bold;
 }
 
 #numeros{
 display:grid;
 grid-template-columns:repeat(5,1fr);
 gap:8px;
-margin-top:20px;
+margin-top:15px;
 }
 
 .numero{
 padding:12px;
+background:#2c2c2c;
 border-radius:8px;
 font-size:18px;
-}
-
-.disponible{
-background:#2ecc71;
 cursor:pointer;
 }
 
 .ocupado{
-background:#333;
-color:#777;
+background:#b71c1c;
 pointer-events:none;
 }
 
 .seleccionado{
-background:gold;
+background:#ffd600;
 color:black;
-}
-
-#mensaje{
-margin-top:20px;
-font-size:22px;
-color:#00ffae;
-}
-
-.error{
-color:red;
-font-size:14px;
+font-weight:bold;
 }
 
 </style>
@@ -95,216 +77,175 @@ font-size:14px;
 
 <h1>🎟 Registro de Participante</h1>
 
-<input id="nombre" placeholder="Nombre">
+<input id="nombre" placeholder="Nombre completo">
+<input id="telefono" placeholder="Teléfono (10 dígitos)" maxlength="10">
 
-<!-- ✅ TELEFONO SOLO NUMERICO -->
-<input
-id="telefono"
-placeholder="Teléfono (10 dígitos)"
-inputmode="numeric"
-maxlength="10"
-/>
-
-<div id="errorTelefono" class="error"></div>
-
-<h3>Selecciona un número (opcional)</h3>
+<h3>Números Disponibles</h3>
 
 <div id="numeros"></div>
 
-<button id="btnRegistrar" onclick="registrar()" disabled>
-Registrar Participante
+<button onclick="numerosAleatorios()">
+🎲 Elegir al azar
 </button>
 
-<h2 id="mensaje"></h2>
+<button onclick="registrar()">
+✅ Registrar Participante
+</button>
 
-
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 <script>
 
-// ================= FIREBASE =================
-const firebaseConfig={
-apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
-authDomain:"rifa-web-2b2f3.firebaseapp.com",
-projectId:"rifa-web-2b2f3",
-storageBucket:"rifa-web-2b2f3.firebasestorage.app",
-messagingSenderId:"440243321091",
-appId:"1:440243321091:web:3a6a0a27e4e418cf6b9136"
+const firebaseConfig = {
+apiKey:"TU_APIKEY",
+authDomain:"TU_DOMINIO",
+projectId:"TU_PROJECTID"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
+const db = firebase.firestore();
 
-let numeroSeleccionado=null;
+let seleccionados=[];
 
+function cargarNumeros(){
 
-// ================= VALIDACION =================
-const nombreInput=document.getElementById("nombre");
-const telefonoInput=document.getElementById("telefono");
-const btnRegistrar=document.getElementById("btnRegistrar");
-const errorTelefono=document.getElementById("errorTelefono");
-
-
-// SOLO NUMEROS
-telefonoInput.addEventListener("input",()=>{
-
-telefonoInput.value=
-telefonoInput.value.replace(/\D/g,'');
-
-validarCampos();
-
-});
-
-
-function validarCampos(){
-
-let nombreOk=
-nombreInput.value.trim()!=="";
-
-let telefono=
-telefonoInput.value;
-
-let telefonoOk=
-telefono.length===10;
-
-if(!telefonoOk && telefono.length>0){
-errorTelefono.innerText=
-"El teléfono debe tener 10 dígitos";
-}else{
-errorTelefono.innerText="";
-}
-
-btnRegistrar.disabled=
-!(nombreOk && telefonoOk);
-
-}
-
-nombreInput.addEventListener("input",validarCampos);
-
-
-// ================= NUMEROS =================
 db.collection("participantes")
 .onSnapshot(snapshot=>{
 
-let usados=[];
-
+let ocupados=[];
 snapshot.forEach(doc=>{
-usados.push(doc.data().numero);
+ocupados.push(doc.data().numero);
 });
 
-dibujarNumeros(usados);
-
-});
-
-
-function dibujarNumeros(usados){
-
-const contenedor=
-document.getElementById("numeros");
-
+let contenedor=document.getElementById("numeros");
 contenedor.innerHTML="";
 
 for(let i=1;i<=100;i++){
 
 let div=document.createElement("div");
-
+div.className="numero";
 div.innerText=i;
-div.classList.add("numero");
 
-if(usados.includes(i)){
+if(ocupados.includes(i)){
 div.classList.add("ocupado");
 }else{
 
-div.classList.add("disponible");
-
 div.onclick=()=>{
-
-document
-.querySelectorAll(".numero")
-.forEach(n=>n.classList.remove("seleccionado"));
-
-div.classList.add("seleccionado");
-
-numeroSeleccionado=i;
-
+toggleNumero(i,div);
 };
 
 }
 
 contenedor.appendChild(div);
-
 }
 
-}
-
-
-// ================= REGISTRAR =================
-async function registrar(){
-
-let nombre=nombreInput.value.trim();
-let telefono=telefonoInput.value;
-
-if(telefono.length!==10){
-alert("Teléfono inválido");
-return;
-}
-
-let usados=[];
-let snap=
-await db.collection("participantes").get();
-
-snap.forEach(doc=>{
-usados.push(doc.data().numero);
 });
 
-let numeroFinal;
-
-if(numeroSeleccionado){
-
-if(usados.includes(numeroSeleccionado)){
-alert("Número ocupado");
-return;
 }
 
-numeroFinal=numeroSeleccionado;
+function toggleNumero(num,elemento){
 
+if(seleccionados.includes(num)){
+seleccionados=seleccionados.filter(n=>n!==num);
+elemento.classList.remove("seleccionado");
 }else{
+seleccionados.push(num);
+elemento.classList.add("seleccionado");
+}
+
+}
+
+function numerosAleatorios(){
+
+seleccionados=[];
+
+document
+.querySelectorAll(".numero")
+.forEach(n=>n.classList.remove("seleccionado"));
 
 let disponibles=[];
 
-for(let i=1;i<=100;i++){
-if(!usados.includes(i))
-disponibles.push(i);
+document.querySelectorAll(".numero:not(.ocupado)")
+.forEach(n=>{
+disponibles.push(parseInt(n.innerText));
+});
+
+let cantidad=prompt("¿Cuántos números desea?");
+cantidad=parseInt(cantidad);
+
+if(!cantidad || cantidad<1) return;
+
+for(let i=0;i<cantidad;i++){
+
+let rand=disponibles.splice(
+Math.floor(Math.random()*disponibles.length),1
+)[0];
+
+seleccionados.push(rand);
+
+document.querySelectorAll(".numero")
+.forEach(div=>{
+if(parseInt(div.innerText)===rand){
+div.classList.add("seleccionado");
+}
+});
+
 }
 
-if(disponibles.length===0){
-alert("Rifa llena");
+}
+
+function validarTelefono(tel){
+return /^[0-9]{10}$/.test(tel);
+}
+
+async function registrar(){
+
+let nombre=document.getElementById("nombre").value.trim();
+let telefono=document.getElementById("telefono").value.trim();
+
+if(nombre==="" || telefono===""){
+alert("Complete todos los campos");
 return;
 }
 
-numeroFinal=
-disponibles[
-Math.floor(Math.random()*disponibles.length)
-];
-
+if(!validarTelefono(telefono)){
+alert("Teléfono inválido (10 dígitos)");
+return;
 }
+
+if(seleccionados.length===0){
+alert("Seleccione al menos un número");
+return;
+}
+
+for(const numero of seleccionados){
 
 await db.collection("participantes").add({
 nombre,
 telefono,
-numero:numeroFinal
+numero
 });
 
-document.getElementById("mensaje").innerText=
-`✅ Registrado con número #${numeroFinal}`;
+let mensaje=
+`Hola ${nombre} ✅
+Registro confirmado.
 
-nombreInput.value="";
-telefonoInput.value="";
-numeroSeleccionado=null;
-btnRegistrar.disabled=true;
+Número(s): ${numero}`;
+
+window.open(
+`https://wa.me/52${telefono}?text=${encodeURIComponent(mensaje)}`
+);
 
 }
+
+alert("Participante registrado");
+
+location.reload();
+
+}
+
+cargarNumeros();
 
 </script>
 
