@@ -43,6 +43,13 @@ margin-top:10px;
 width:90%;
 max-width:320px;
 cursor:pointer;
+transition:.3s;
+}
+
+button:disabled{
+opacity:.5;
+background:#555;
+cursor:not-allowed;
 }
 
 #numeros{
@@ -54,19 +61,18 @@ margin-top:20px;
 
 .numero{
 padding:12px;
-background:#222;
 border-radius:8px;
-cursor:pointer;
 font-size:18px;
 }
 
 .disponible{
 background:#2ecc71;
+cursor:pointer;
 }
 
 .ocupado{
-background:#444;
-color:#888;
+background:#333;
+color:#777;
 pointer-events:none;
 }
 
@@ -92,11 +98,11 @@ color:#00ffae;
 <input id="nombre" placeholder="Nombre">
 <input id="telefono" placeholder="Teléfono">
 
-<h3>Selecciona un número</h3>
+<h3>Selecciona un número (opcional)</h3>
 
 <div id="numeros"></div>
 
-<button onclick="registrar()">
+<button id="btnRegistrar" onclick="registrar()" disabled>
 Registrar Participante
 </button>
 
@@ -127,7 +133,31 @@ let numeroSeleccionado=null;
 
 
 // =======================
-// MOSTRAR NUMEROS
+// VALIDAR CAMPOS
+// =======================
+const nombreInput=document.getElementById("nombre");
+const telefonoInput=document.getElementById("telefono");
+const btnRegistrar=document.getElementById("btnRegistrar");
+
+function validarCampos(){
+
+if(
+nombreInput.value.trim()!=="" &&
+telefonoInput.value.trim()!==""
+){
+btnRegistrar.disabled=false;
+}else{
+btnRegistrar.disabled=true;
+}
+
+}
+
+nombreInput.addEventListener("input",validarCampos);
+telefonoInput.addEventListener("input",validarCampos);
+
+
+// =======================
+// NUMEROS EN VIVO
 // =======================
 db.collection("participantes")
 .onSnapshot(snapshot=>{
@@ -158,18 +188,24 @@ div.innerText=i;
 div.classList.add("numero");
 
 if(usados.includes(i)){
+
 div.classList.add("ocupado");
+
 }else{
+
 div.classList.add("disponible");
 
 div.onclick=()=>{
+
 document
 .querySelectorAll(".numero")
 .forEach(n=>n.classList.remove("seleccionado"));
 
 div.classList.add("seleccionado");
+
 numeroSeleccionado=i;
 };
+
 }
 
 contenedor.appendChild(div);
@@ -184,19 +220,16 @@ contenedor.appendChild(div);
 // =======================
 async function registrar(){
 
-let nombre=
-document.getElementById("nombre").value;
+let nombre=nombreInput.value.trim();
+let telefono=telefonoInput.value.trim();
 
-let telefono=
-document.getElementById("telefono").value;
-
-if(!nombre||!telefono){
-alert("Completa datos");
+if(!nombre || !telefono){
+alert("Completa nombre y teléfono");
 return;
 }
 
 
-// obtener usados otra vez
+// obtener usados
 let usados=[];
 let snap=
 await db.collection("participantes").get();
@@ -207,7 +240,8 @@ usados.push(doc.data().numero);
 
 let numeroFinal;
 
-// si eligió numero
+
+// numero elegido
 if(numeroSeleccionado){
 
 if(usados.includes(numeroSeleccionado)){
@@ -250,9 +284,11 @@ numero:numeroFinal
 document.getElementById("mensaje").innerText=
 `✅ Registrado con número #${numeroFinal}`;
 
-document.getElementById("nombre").value="";
-document.getElementById("telefono").value="";
+nombreInput.value="";
+telefonoInput.value="";
 numeroSeleccionado=null;
+
+btnRegistrar.disabled=true;
 
 }
 
