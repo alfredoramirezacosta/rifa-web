@@ -18,10 +18,6 @@ margin:0;
 padding:15px;
 }
 
-h1{
-margin-bottom:10px;
-}
-
 input{
 padding:14px;
 margin:8px;
@@ -43,7 +39,6 @@ margin-top:10px;
 width:90%;
 max-width:320px;
 cursor:pointer;
-transition:.3s;
 }
 
 button:disabled{
@@ -87,6 +82,11 @@ font-size:22px;
 color:#00ffae;
 }
 
+.error{
+color:red;
+font-size:14px;
+}
+
 </style>
 
 </head>
@@ -96,7 +96,16 @@ color:#00ffae;
 <h1>🎟 Registro de Participante</h1>
 
 <input id="nombre" placeholder="Nombre">
-<input id="telefono" placeholder="Teléfono">
+
+<!-- ✅ TELEFONO SOLO NUMERICO -->
+<input
+id="telefono"
+placeholder="Teléfono (10 dígitos)"
+inputmode="numeric"
+maxlength="10"
+/>
+
+<div id="errorTelefono" class="error"></div>
 
 <h3>Selecciona un número (opcional)</h3>
 
@@ -114,9 +123,7 @@ Registrar Participante
 
 <script>
 
-// =======================
-// FIREBASE
-// =======================
+// ================= FIREBASE =================
 const firebaseConfig={
 apiKey:"AIzaSyCqVZwBX96EHfl3k__iqyc7rF1MZmSVpRI",
 authDomain:"rifa-web-2b2f3.firebaseapp.com",
@@ -132,33 +139,51 @@ const db=firebase.firestore();
 let numeroSeleccionado=null;
 
 
-// =======================
-// VALIDAR CAMPOS
-// =======================
+// ================= VALIDACION =================
 const nombreInput=document.getElementById("nombre");
 const telefonoInput=document.getElementById("telefono");
 const btnRegistrar=document.getElementById("btnRegistrar");
+const errorTelefono=document.getElementById("errorTelefono");
+
+
+// SOLO NUMEROS
+telefonoInput.addEventListener("input",()=>{
+
+telefonoInput.value=
+telefonoInput.value.replace(/\D/g,'');
+
+validarCampos();
+
+});
+
 
 function validarCampos(){
 
-if(
-nombreInput.value.trim()!=="" &&
-telefonoInput.value.trim()!==""
-){
-btnRegistrar.disabled=false;
+let nombreOk=
+nombreInput.value.trim()!=="";
+
+let telefono=
+telefonoInput.value;
+
+let telefonoOk=
+telefono.length===10;
+
+if(!telefonoOk && telefono.length>0){
+errorTelefono.innerText=
+"El teléfono debe tener 10 dígitos";
 }else{
-btnRegistrar.disabled=true;
+errorTelefono.innerText="";
 }
+
+btnRegistrar.disabled=
+!(nombreOk && telefonoOk);
 
 }
 
 nombreInput.addEventListener("input",validarCampos);
-telefonoInput.addEventListener("input",validarCampos);
 
 
-// =======================
-// NUMEROS EN VIVO
-// =======================
+// ================= NUMEROS =================
 db.collection("participantes")
 .onSnapshot(snapshot=>{
 
@@ -188,9 +213,7 @@ div.innerText=i;
 div.classList.add("numero");
 
 if(usados.includes(i)){
-
 div.classList.add("ocupado");
-
 }else{
 
 div.classList.add("disponible");
@@ -204,6 +227,7 @@ document
 div.classList.add("seleccionado");
 
 numeroSeleccionado=i;
+
 };
 
 }
@@ -215,21 +239,17 @@ contenedor.appendChild(div);
 }
 
 
-// =======================
-// REGISTRAR
-// =======================
+// ================= REGISTRAR =================
 async function registrar(){
 
 let nombre=nombreInput.value.trim();
-let telefono=telefonoInput.value.trim();
+let telefono=telefonoInput.value;
 
-if(!nombre || !telefono){
-alert("Completa nombre y teléfono");
+if(telefono.length!==10){
+alert("Teléfono inválido");
 return;
 }
 
-
-// obtener usados
 let usados=[];
 let snap=
 await db.collection("participantes").get();
@@ -240,8 +260,6 @@ usados.push(doc.data().numero);
 
 let numeroFinal;
 
-
-// numero elegido
 if(numeroSeleccionado){
 
 if(usados.includes(numeroSeleccionado)){
@@ -272,14 +290,11 @@ Math.floor(Math.random()*disponibles.length)
 
 }
 
-
-// guardar
 await db.collection("participantes").add({
 nombre,
 telefono,
 numero:numeroFinal
 });
-
 
 document.getElementById("mensaje").innerText=
 `✅ Registrado con número #${numeroFinal}`;
@@ -287,7 +302,6 @@ document.getElementById("mensaje").innerText=
 nombreInput.value="";
 telefonoInput.value="";
 numeroSeleccionado=null;
-
 btnRegistrar.disabled=true;
 
 }
