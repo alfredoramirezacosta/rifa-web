@@ -244,8 +244,6 @@ d.classList.add("seleccionado");
 
 async function registrar(){
 
-try{
-
 let nombre =
 document.getElementById("nombre").value.trim();
 
@@ -267,23 +265,7 @@ alert("Seleccione números");
 return;
 }
 
-/* GUARDAR CLIENTE */
-await db.collection("clientes")
-.doc(telefono)
-.set({nombre});
-
-/* 🔥 GUARDADO RAPIDO */
-let promesas = seleccionados.map(numero =>
-db.collection("participantes").add({
-nombre,
-telefono,
-numero
-})
-);
-
-await Promise.all(promesas);
-
-/* ================= WHATSAPP ================= */
+/* ================= WHATSAPP PRIMERO ================= */
 
 seleccionados.sort((a,b)=>a-b);
 
@@ -301,20 +283,39 @@ let mensaje =
 
 let numeroWhatsApp = "52" + telefono;
 
-/* ABRIR WHATSAPP */
+/* 🚀 ABRE INMEDIATO */
 window.open(
 `https://wa.me/${numeroWhatsApp}?text=${mensaje}`,
 "_blank"
 );
 
-alert("✅ Registro exitoso");
 
-location.reload();
+/* ================= GUARDAR EN SEGUNDO PLANO ================= */
+
+try{
+
+await db.collection("clientes")
+.doc(telefono)
+.set({nombre});
+
+let promesas = seleccionados.map(numero =>
+db.collection("participantes").add({
+nombre,
+telefono,
+numero
+})
+);
+
+await Promise.all(promesas);
+
+console.log("Registro guardado");
 
 }catch(e){
-console.error(e);
-alert("Error al registrar");
+console.error("Error guardando:",e);
 }
+
+/* limpiar */
+setTimeout(()=>location.reload(),1000);
 
 }
 
