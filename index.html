@@ -252,8 +252,6 @@ document.getElementById("nombre").value.trim();
 let telefono =
 document.getElementById("telefono").value.trim();
 
-/* VALIDACIONES */
-
 if(!/^[0-9]{10}$/.test(telefono)){
 alert("Teléfono inválido");
 return;
@@ -274,23 +272,21 @@ await db.collection("clientes")
 .doc(telefono)
 .set({nombre});
 
-/* GUARDAR NUMEROS */
-for(const numero of seleccionados){
-
-await db.collection("participantes").add({
+/* 🔥 GUARDADO RAPIDO */
+let promesas = seleccionados.map(numero =>
+db.collection("participantes").add({
 nombre,
 telefono,
 numero
-});
+})
+);
 
-}
+await Promise.all(promesas);
 
 /* ================= WHATSAPP ================= */
 
-/* ordenar números */
 seleccionados.sort((a,b)=>a-b);
 
-/* mensaje */
 let mensaje =
 `🎟 Gracias por participar en la rifa.%0A%0A`+
 `👤 Nombre: ${nombre}%0A`+
@@ -303,10 +299,9 @@ let mensaje =
 `• Amstel 355ml%0A%0A`+
 `✅ ¡Mucha suerte!`;
 
-/* NUMERO CLIENTE */
 let numeroWhatsApp = "52" + telefono;
 
-/* abrir TU whatsapp hacia el cliente */
+/* ABRIR WHATSAPP */
 window.open(
 `https://wa.me/${numeroWhatsApp}?text=${mensaje}`,
 "_blank"
